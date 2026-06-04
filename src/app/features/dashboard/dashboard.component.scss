@@ -1,0 +1,60 @@
+@use 'styles/variables' as *;
+
+.welcome-panel {
+  background: $color-surface;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    color: $color-text;
+  }
+
+  p {
+    margin: 0.25rem 0;
+    color: $color-text-muted;
+  }
+}
+
+.welcome-note {
+  margin-top: 0.75rem !important;
+  font-size: 0.9rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: $color-surface;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: $color-text-muted;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.stat-sub {
+  font-size: 0.8rem;
+  color: $color-text-light;
+}

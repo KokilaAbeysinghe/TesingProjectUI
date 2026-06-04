@@ -1,0 +1,11 @@
+<header class="app-header">
+  <div class="header-left">
+    <h2 class="page-context">Point of Sale System</h2>
+  </div>
+  <div class="header-right">
+    <span class="current-time">{{ today | date:'EEE, MMM d, y' }}</span>
+    @if (userRole) {
+      <span class="user-badge">{{ userRole }}</span>
+    }
+  </div>
+</header>

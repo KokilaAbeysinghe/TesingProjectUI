@@ -1,0 +1,39 @@
+@use 'styles/variables' as *;
+
+.app-header {
+  height: 60px;
+  background: $color-surface;
+  border-bottom: 1px solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.page-context {
+  font-size: 1rem;
+  font-weight: 600;
+  color: $color-text;
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.current-time {
+  font-size: 0.85rem;
+  color: $color-text-muted;
+}
+
+.user-badge {
+  padding: 0.25rem 0.75rem;
+  background: $color-primary-light;
+  color: $color-primary;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
