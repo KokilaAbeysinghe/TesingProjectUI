@@ -6,15 +6,20 @@
 <div class="welcome-panel">
   <h2>Hello, {{ userEmail }}</h2>
   <p>You are signed in as <strong>{{ userRole }}</strong>.</p>
-  <p class="welcome-note">Use the sidebar menu to navigate. More features like Products and Sales will be added next.</p>
+  <p class="welcome-note">Use the sidebar menu to navigate. More features like Sales and Customers will be added next.</p>
 </div>
 
 <div class="stats-grid">
-  <div class="stat-card">
+  <a class="stat-card" routerLink="/app/products">
     <span class="stat-label">Products</span>
-    <span class="stat-value">Coming soon</span>
+    <span class="stat-value">{{ productCount() ?? '—' }}</span>
     <span class="stat-sub">Manage inventory</span>
-  </div>
+  </a>
+  <a class="stat-card" routerLink="/app/categories">
+    <span class="stat-label">Categories</span>
+    <span class="stat-value">{{ categoryCount() ?? '—' }}</span>
+    <span class="stat-sub">Organize products</span>
+  </a>
   <div class="stat-card">
     <span class="stat-label">Sales</span>
     <span class="stat-value">Coming soon</span>
