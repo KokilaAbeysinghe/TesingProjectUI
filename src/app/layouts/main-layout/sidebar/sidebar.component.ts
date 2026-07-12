@@ -21,7 +21,8 @@ export class SidebarComponent {
   readonly #router = inject(Router);
 
   readonly navItems: NavItem[] = [
-    { label: 'Dashboard', icon: '📊', route: '/app/dashboard' }
+    { label: 'Dashboard', icon: '📊', route: '/app/dashboard' },
+    { label: 'Customers', icon: '👥', route: '/app/customers' }
   ];
 
   get userEmail(): string | null {

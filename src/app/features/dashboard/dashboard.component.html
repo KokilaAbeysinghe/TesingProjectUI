@@ -20,9 +20,9 @@
     <span class="stat-value">Coming soon</span>
     <span class="stat-sub">Process transactions</span>
   </div>
-  <div class="stat-card">
+  <a class="stat-card" routerLink="/app/customers">
     <span class="stat-label">Customers</span>
-    <span class="stat-value">Coming soon</span>
+    <span class="stat-value">{{ customerCount() ?? '—' }}</span>
     <span class="stat-sub">Customer records</span>
-  </div>
+  </a>
 </div>
