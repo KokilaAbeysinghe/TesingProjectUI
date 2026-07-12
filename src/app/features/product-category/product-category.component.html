@@ -1,0 +1,69 @@
+<app-page-header title="Product Categories" subtitle="Organize your products into categories" />
+
+@if (errorMessage()) {
+  <div class="alert alert-error">{{ errorMessage() }}</div>
+}
+
+<div class="toolbar">
+  <button type="button" class="btn btn-primary" (click)="openAddForm()">+ Add Category</button>
+</div>
+
+@if (showForm()) {
+  <div class="form-panel">
+    <h3>{{ editingCategoryId() ? 'Edit Category' : 'Add Category' }}</h3>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="category-form">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input id="name" type="text" formControlName="name" placeholder="Category name" />
+        @if (form.get('name')?.invalid && form.get('name')?.touched) {
+          <span class="field-error">Name is required and must be under 100 characters.</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" formControlName="description" placeholder="Optional description" rows="3"></textarea>
+        @if (form.get('description')?.invalid && form.get('description')?.touched) {
+          <span class="field-error">Description must be under 500 characters.</span>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+          @if (isSaving()) { Saving... } @else { Save }
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+<div class="table-card">
+  @if (isLoading()) {
+    <p class="loading-text">Loading categories...</p>
+  } @else if (categories().length === 0) {
+    <p class="empty-text">No categories yet. Add your first category above.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (category of categories(); track category.id) {
+          <tr>
+            <td>{{ category.name }}</td>
+            <td>{{ category.description || '—' }}</td>
+            <td class="actions-column">
+              <button type="button" class="btn-link" (click)="openEditForm(category)">Edit</button>
+              <button type="button" class="btn-link btn-link-danger" (click)="deleteCategory(category)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

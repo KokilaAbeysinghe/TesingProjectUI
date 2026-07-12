@@ -10,6 +10,11 @@
 </div>
 
 <div class="stats-grid">
+  <a class="stat-card" routerLink="/app/categories">
+    <span class="stat-label">Categories</span>
+    <span class="stat-value">{{ categoryCount() ?? '—' }}</span>
+    <span class="stat-sub">Organize products</span>
+  </a>
   <div class="stat-card">
     <span class="stat-label">Products</span>
     <span class="stat-value">Coming soon</span>
