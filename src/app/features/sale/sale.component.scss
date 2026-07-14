@@ -1,0 +1,229 @@
+@use 'styles/variables' as *;
+
+.alert-error {
+  background: $color-danger-bg;
+  border: 1px solid $color-danger-border;
+  color: $color-danger;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.btn-primary {
+  background: $color-primary;
+  color: $color-surface;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-hover;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  background: $color-background-alt;
+  color: $color-text;
+  border: 1px solid $color-border;
+
+  &:hover:not(:disabled) {
+    background: $color-border;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.form-panel {
+  background: $color-surface;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+
+  h3 {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+    color: $color-text;
+  }
+}
+
+.customer-form {
+  max-width: 480px;
+  margin-bottom: 1.25rem;
+}
+
+.item-form {
+  margin-bottom: 1.25rem;
+}
+
+.form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.25rem;
+}
+
+.product-group {
+  flex: 1;
+}
+
+.quantity-group {
+  width: 100px;
+}
+
+.add-item-button {
+  height: 2.6rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $color-text;
+  }
+
+  input,
+  select {
+    padding: 0.625rem 0.875rem;
+    border: 1px solid $color-border-input;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+
+    &:focus {
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+  }
+}
+
+.field-error {
+  display: block;
+  color: $color-danger;
+  font-size: 0.78rem;
+  margin-top: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.table-card {
+  background: $color-surface;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+
+  h3 {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+    color: $color-text;
+  }
+}
+
+.loading-text,
+.empty-text {
+  color: $color-text-muted;
+  text-align: center;
+  padding: 1.5rem 0;
+  margin: 0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: $color-text-muted;
+    padding: 0.75rem;
+    border-bottom: 1px solid $color-border;
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid $color-border;
+    color: $color-text;
+    font-size: 0.9rem;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.cart-table {
+  margin-bottom: 1rem;
+}
+
+.cart-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: $color-text;
+  padding: 0.75rem 0.75rem 0;
+}
+
+.details-row td {
+  background: $color-background-alt;
+  padding: 1rem;
+}
+
+.nested-table {
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+
+.actions-column {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: $color-primary;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.btn-link-danger {
+  color: $color-danger;
+}

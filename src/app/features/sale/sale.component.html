@@ -1,0 +1,148 @@
+<app-page-header title="Sales" subtitle="Create a new sale and view sales history" />
+
+@if (errorMessage()) {
+  <div class="alert alert-error">{{ errorMessage() }}</div>
+}
+
+<div class="form-panel">
+  <h3>New Sale</h3>
+
+  <form [formGroup]="saleForm" class="customer-form">
+    <div class="form-group">
+      <label for="customerId">Customer</label>
+      <select id="customerId" formControlName="customerId">
+        <option [ngValue]="0" disabled>Select a customer</option>
+        @for (customer of customers(); track customer.id) {
+          <option [ngValue]="customer.id">{{ customer.name }} ({{ customer.phone }})</option>
+        }
+      </select>
+      @if (saleForm.get('customerId')?.invalid && saleForm.get('customerId')?.touched) {
+        <span class="field-error">Customer is required.</span>
+      }
+    </div>
+  </form>
+
+  <form [formGroup]="itemForm" (ngSubmit)="addItemToCart()" class="item-form">
+    <div class="form-row">
+      <div class="form-group product-group">
+        <label for="productId">Product</label>
+        <select id="productId" formControlName="productId">
+          <option [ngValue]="0" disabled>Select a product</option>
+          @for (product of products(); track product.id) {
+            <option [ngValue]="product.id">{{ product.name }} — LKR {{ product.price | number: '1.2-2' }} ({{ product.stock }} in stock)</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group quantity-group">
+        <label for="quantity">Qty</label>
+        <input id="quantity" type="number" min="1" formControlName="quantity" />
+      </div>
+
+      <button type="submit" class="btn btn-secondary add-item-button">+ Add Item</button>
+    </div>
+    @if (itemErrorMessage()) {
+      <span class="field-error">{{ itemErrorMessage() }}</span>
+    }
+  </form>
+
+  @if (cartItems().length > 0) {
+    <table class="data-table cart-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Unit Price</th>
+          <th>Subtotal</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of cartItems(); track item.productId) {
+          <tr>
+            <td>{{ item.productName }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.unitPrice | number: '1.2-2' }}</td>
+            <td>{{ item.unitPrice * item.quantity | number: '1.2-2' }}</td>
+            <td class="actions-column">
+              <button type="button" class="btn-link btn-link-danger" (click)="removeFromCart(item.productId)">Remove</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="cart-total">
+      <span>Total</span>
+      <span>LKR {{ cartTotal | number: '1.2-2' }}</span>
+    </div>
+  } @else {
+    <p class="empty-text">No items added yet.</p>
+  }
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" [disabled]="isSaving() || cartItems().length === 0" (click)="submitSale()">
+      @if (isSaving()) { Processing... } @else { Complete Sale }
+    </button>
+  </div>
+</div>
+
+<div class="table-card">
+  <h3>Sales History</h3>
+  @if (isLoading()) {
+    <p class="loading-text">Loading sales...</p>
+  } @else if (sales().length === 0) {
+    <p class="empty-text">No sales recorded yet.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Total</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (sale of sales(); track sale.id) {
+          <tr>
+            <td>{{ sale.saleDate | date: 'MMM d, y, h:mm a' }}</td>
+            <td>{{ sale.customerName }}</td>
+            <td>{{ sale.totalAmount | number: '1.2-2' }}</td>
+            <td class="actions-column">
+              <button type="button" class="btn-link" (click)="toggleSaleDetails(sale.id)">
+                {{ expandedSaleId() === sale.id ? 'Hide' : 'View' }}
+              </button>
+            </td>
+          </tr>
+          @if (expandedSaleId() === sale.id) {
+            <tr class="details-row">
+              <td colspan="4">
+                <table class="data-table nested-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Qty</th>
+                      <th>Unit Price</th>
+                      <th>Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of sale.saleItems; track item.productId) {
+                      <tr>
+                        <td>{{ item.productName }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unitPrice | number: '1.2-2' }}</td>
+                        <td>{{ item.unitPrice * item.quantity | number: '1.2-2' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>
