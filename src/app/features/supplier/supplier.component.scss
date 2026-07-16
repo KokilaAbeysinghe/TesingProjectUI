@@ -10,6 +10,13 @@
   margin-bottom: 1rem;
 }
 
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 2.5rem;
+  margin-bottom: 1rem;
+}
+
 .btn {
   padding: 0.625rem 1.25rem;
   border-radius: 8px;
@@ -39,13 +46,8 @@
   color: $color-text;
   border: 1px solid $color-border;
 
-  &:hover:not(:disabled) {
+  &:hover {
     background: $color-border;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
   }
 }
 
@@ -63,40 +65,11 @@
   }
 }
 
-.customer-form {
-  margin-bottom: 1.25rem;
-
-  .form-group {
-    max-width: 280px;
-  }
-}
-
-.item-form {
-  margin-bottom: 1.25rem;
-}
-
-.form-row {
+.supplier-form {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
   gap: 1.25rem;
-}
-
-.search-group {
-  flex: 1;
-  max-width: 220px;
-}
-
-.product-group {
-  flex: 1;
-  max-width: 360px;
-}
-
-.quantity-group {
-  width: 100px;
-}
-
-.add-item-button {
-  height: 2.6rem;
+  max-width: 480px;
 }
 
 .form-group {
@@ -110,8 +83,7 @@
     color: $color-text;
   }
 
-  input,
-  select {
+  input {
     padding: 0.625rem 0.875rem;
     border: 1px solid $color-border-input;
     border-radius: 8px;
@@ -119,6 +91,8 @@
     font-family: inherit;
     outline: none;
     transition: border-color 0.15s;
+    background: $color-surface;
+    color: $color-text;
 
     &:focus {
       border-color: $color-primary;
@@ -128,18 +102,14 @@
 }
 
 .field-error {
-  display: block;
   color: $color-danger;
   font-size: 0.78rem;
-  margin-top: 0.5rem;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin-top: 1.25rem;
- padding-right: 15.5rem;
 }
 
 .table-card {
@@ -147,12 +117,6 @@
   border-radius: 10px;
   padding: 1.25rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
-
-  h3 {
-    margin: 0 0 1rem;
-    font-size: 1.1rem;
-    color: $color-text;
-  }
 }
 
 .loading-text,
@@ -189,32 +153,6 @@
   }
 }
 
-.cart-table {
-  margin-bottom: 1rem;
-}
-
-.cart-total {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 700;
-  font-size: 1.05rem;
-  color: $color-text;
-  padding: 0.75rem 0.75rem 0;
-}
-
-.details-row td {
-  background: $color-background-alt;
-  padding: 1rem;
-}
-
-.nested-table {
-  th,
-  td {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-  }
-}
-
 .actions-column {
   text-align: right;
   white-space: nowrap;
@@ -236,108 +174,4 @@
 
 .btn-link-danger {
   color: $color-danger;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: $color-primary-light;
-  color: $color-primary;
-}
-
-.status-voided {
-  background: $color-danger-bg;
-  color: $color-danger;
-}
-
-.voided-row {
-  td {
-    color: $color-text-muted;
-  }
-}
-
-.edit-row td {
-  background: $color-background-alt;
-  padding: 1rem;
-}
-
-.edit-sale-form {
-  display: flex;
-  align-items: flex-end;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
-
-.edit-sale-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.receipt-print {
-  display: none;
-}
-
-@media print {
-  app-page-header,
-  .alert-error,
-  .form-panel,
-  .table-card {
-    display: none !important;
-  }
-
-  .receipt-print {
-    display: block;
-    width: 100%;
-    font-family: 'Courier New', monospace;
-    color: #000;
-
-    h2 {
-      text-align: center;
-      margin: 0 0 0.5rem;
-    }
-
-    hr {
-      border: none;
-      border-top: 1px dashed #000;
-      margin: 0.5rem 0;
-    }
-  }
-
-  .receipt-line {
-    margin: 0.25rem 0;
-  }
-
-  .receipt-void-label {
-    text-align: center;
-    font-weight: 700;
-    font-size: 1.25rem;
-    letter-spacing: 0.2em;
-    margin: 0.5rem 0;
-  }
-
-  .receipt-table {
-    width: 100%;
-    border-collapse: collapse;
-
-    th,
-    td {
-      text-align: left;
-      padding: 0.25rem;
-      font-size: 0.85rem;
-    }
-  }
-
-  .receipt-total {
-    font-weight: 700;
-    text-align: right;
-    margin: 0.5rem 0;
-  }
-
-  .receipt-thanks {
-    text-align: center;
-    margin-top: 0.75rem;
-  }
 }

@@ -23,8 +23,14 @@ export class SidebarComponent {
 
   readonly #allNavItems: NavItem[] = [
     { label: 'Dashboard', icon: '📊', route: '/app/dashboard' },
+    { label: 'Sales', icon: '🧾', route: '/app/sales' },
     { label: 'Products', icon: '📦', route: '/app/products' },
+    { label: 'Inventory', icon: '📋', route: '/app/inventory' },
+    { label: 'Suppliers', icon: '🏭', route: '/app/suppliers' },
+    { label: 'Purchases', icon: '🛒', route: '/app/purchases' },
     { label: 'Categories', icon: '🗂️', route: '/app/categories' },
+    { label: 'Customers', icon: '👥', route: '/app/customers' },
+    { label: 'Reports', icon: '📈', route: '/app/reports' },
     { label: 'Staff', icon: '🧑‍💼', route: '/app/staff', adminOnly: true }
   ];
 

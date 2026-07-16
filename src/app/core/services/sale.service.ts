@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { CreateSaleRequest, Sale } from '../models/sale.model';
+import { CreateSaleRequest, Sale, UpdateSaleRequest } from '../models/sale.model';
 
 @Injectable({ providedIn: 'root' })
 export class SaleService {
@@ -20,6 +20,14 @@ export class SaleService {
 
   create(request: CreateSaleRequest): Observable<string> {
     return this.#http.post<string>(this.#baseUrl, request);
+  }
+
+  update(id: number, request: UpdateSaleRequest): Observable<string> {
+    return this.#http.put<string>(`${this.#baseUrl}/${id}`, request);
+  }
+
+  voidSale(id: number): Observable<string> {
+    return this.#http.post<string>(`${this.#baseUrl}/${id}/void`, {});
   }
 
   calculateTotal(id: number): Observable<{ saleId: number; total: number }> {

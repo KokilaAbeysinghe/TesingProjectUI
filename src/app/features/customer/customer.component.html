@@ -1,0 +1,73 @@
+<app-page-header title="Customers" subtitle="Manage your customer records" />
+
+@if (errorMessage()) {
+  <div class="alert alert-error">{{ errorMessage() }}</div>
+}
+
+<div class="toolbar">
+  <button type="button" class="btn btn-primary" (click)="openAddForm()">+ Add Customer</button>
+</div>
+
+@if (showForm()) {
+  <div class="form-panel">
+    <h3>{{ editingCustomerId() ? 'Edit Customer' : 'Add Customer' }}</h3>
+    <form [formGroup]="form" class="customer-form">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input id="name" type="text" formControlName="name" placeholder="Customer name" />
+        @if (form.get('name')?.invalid && form.get('name')?.touched) {
+          <span class="field-error">Name is required and must be under 100 characters.</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone</label>
+        <input id="phone" type="text" formControlName="phone" placeholder="e.g. 0771234567 or +94771234567" />
+        @if (form.get('phone')?.hasError('required') && form.get('phone')?.touched) {
+          <span class="field-error">Phone number is required.</span>
+        }
+        @if (form.get('phone')?.hasError('sriLankanPhone') && form.get('phone')?.touched) {
+          <span class="field-error">Enter a valid phone number (e.g. 0771234567 or +94771234567).</span>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving()" (click)="submit()">
+        
+          @if (isSaving()) { Saving... } @else { Save }
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+<div class="table-card">
+  @if (isLoading()) {
+    <p class="loading-text">Loading customers...</p>
+  } @else if (customers().length === 0) {
+    <p class="empty-text">No customers yet. Add your first customer above.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (customer of customers(); track customer.id) {
+          <tr>
+            <td>{{ customer.name }}</td>
+            <td>{{ customer.phone }}</td>
+            <td class="actions-column">
+              <button type="button" class="btn-link" (click)="openEditForm(customer)">Edit</button>
+              <button type="button" class="btn-link btn-link-danger" (click)="deleteCustomer(customer)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

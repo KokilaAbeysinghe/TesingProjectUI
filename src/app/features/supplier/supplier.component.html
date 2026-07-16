@@ -1,0 +1,88 @@
+<app-page-header title="Suppliers" subtitle="Manage hardware suppliers for restocking" />
+
+@if (errorMessage()) {
+  <div class="alert alert-error">{{ errorMessage() }}</div>
+}
+
+<div class="toolbar">
+  @if (canManageSupplier) {
+    <button type="button" class="btn btn-primary" (click)="openAddForm()">+ Add Supplier</button>
+  }
+</div>
+
+@if (showForm()) {
+  <div class="form-panel">
+    <h3>{{ editingSupplierId() ? 'Edit Supplier' : 'Add Supplier' }}</h3>
+    <form [formGroup]="form" class="supplier-form">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input id="name" type="text" formControlName="name" placeholder="Supplier name" />
+        @if (form.get('name')?.invalid && form.get('name')?.touched) {
+          <span class="field-error">Name is required and must be under 100 characters.</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone</label>
+        <input id="phone" type="text" formControlName="phone" placeholder="e.g. 0771234567" />
+        @if (form.get('phone')?.hasError('required') && form.get('phone')?.touched) {
+          <span class="field-error">Phone number is required.</span>
+        }
+        @if (form.get('phone')?.hasError('sriLankanPhone') && form.get('phone')?.touched) {
+          <span class="field-error">Enter a valid phone number (e.g. 0771234567 or +94771234567).</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email" placeholder="supplier@example.com" />
+        @if (form.get('email')?.invalid && form.get('email')?.touched) {
+          <span class="field-error">Valid email is required.</span>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+        <button type="button" class="btn btn-primary" [disabled]="isSaving()" (click)="submit()">
+          @if (isSaving()) { Saving... } @else { Save }
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+<div class="table-card">
+  @if (isLoading()) {
+    <p class="loading-text">Loading suppliers...</p>
+  } @else if (suppliers().length === 0) {
+    <p class="empty-text">No suppliers yet. Add your first supplier above.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          @if (canManageSupplier) {
+            <th class="actions-column">Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (supplier of suppliers(); track supplier.id) {
+          <tr>
+            <td>{{ supplier.name }}</td>
+            <td>{{ supplier.phone }}</td>
+            <td>{{ supplier.email }}</td>
+            @if (canManageSupplier) {
+              <td class="actions-column">
+                <button type="button" class="btn-link" (click)="openEditForm(supplier)">Edit</button>
+                <button type="button" class="btn-link btn-link-danger" (click)="deleteSupplier(supplier)">Delete</button>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

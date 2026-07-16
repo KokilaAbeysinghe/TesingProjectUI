@@ -16,3 +16,15 @@ body {
 a {
   color: $color-primary;
 }
+
+@media print {
+  app-sidebar,
+  app-header {
+    display: none !important;
+  }
+
+  .main-content {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+}

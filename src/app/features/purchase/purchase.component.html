@@ -1,0 +1,160 @@
+<app-page-header title="Purchases" subtitle="Record supplier purchases and restock inventory" />
+
+@if (errorMessage()) {
+  <div class="alert alert-error">{{ errorMessage() }}</div>
+}
+
+@if (canCreatePurchase) {
+  <div class="form-panel">
+    <h3>New Purchase</h3>
+
+    <form [formGroup]="purchaseForm" class="supplier-form">
+      <div class="form-group">
+        <label for="supplierId">Supplier</label>
+        <select id="supplierId" formControlName="supplierId">
+          <option [ngValue]="0" disabled>Select a supplier</option>
+          @for (supplier of suppliers(); track supplier.id) {
+            <option [ngValue]="supplier.id">{{ supplier.name }} ({{ supplier.phone }})</option>
+          }
+        </select>
+        @if (purchaseForm.get('supplierId')?.invalid && purchaseForm.get('supplierId')?.touched) {
+          <span class="field-error">Supplier is required.</span>
+        }
+      </div>
+    </form>
+
+    <form [formGroup]="itemForm" (ngSubmit)="addItemToCart()" class="item-form">
+      <div class="form-row">
+        <div class="form-group product-group">
+          <label for="productId">Product</label>
+          <select id="productId" formControlName="productId">
+            <option [ngValue]="0" disabled>Select a product</option>
+            @for (product of products(); track product.id) {
+              <option [ngValue]="product.id">{{ product.name }} ({{ product.stock }} in stock)</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group quantity-group">
+          <label for="quantity">Qty</label>
+          <input id="quantity" type="number" min="1" formControlName="quantity" />
+        </div>
+
+        <div class="form-group cost-group">
+          <label for="unitCost">Unit Cost</label>
+          <input id="unitCost" type="number" min="0.01" step="0.01" formControlName="unitCost" />
+        </div>
+
+        <button type="submit" class="btn btn-secondary add-item-button">+ Add Item</button>
+      </div>
+      @if (itemErrorMessage()) {
+        <span class="field-error">{{ itemErrorMessage() }}</span>
+      }
+    </form>
+
+    @if (cartItems().length > 0) {
+      <table class="data-table cart-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Unit Cost</th>
+            <th>Subtotal</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of cartItems(); track item.productId) {
+            <tr>
+              <td>{{ item.productName }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ item.unitCost | number: '1.2-2' }}</td>
+              <td>{{ item.unitCost * item.quantity | number: '1.2-2' }}</td>
+              <td class="actions-column">
+                <button type="button" class="btn-link btn-link-danger" (click)="removeFromCart(item.productId)">Remove</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="cart-total">
+        <span>Total</span>
+        <span>LKR {{ cartTotal | number: '1.2-2' }}</span>
+      </div>
+    } @else {
+      <p class="empty-text">No items added yet.</p>
+    }
+
+    <div class="form-actions">
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="isSaving() || cartItems().length === 0"
+        (click)="submitPurchase()"
+      >
+        @if (isSaving()) { Saving... } @else { Record Purchase }
+      </button>
+    </div>
+  </div>
+}
+
+<div class="table-card">
+  <h3>Purchase History</h3>
+  @if (isLoading()) {
+    <p class="loading-text">Loading purchases...</p>
+  } @else if (purchases().length === 0) {
+    <p class="empty-text">No purchases recorded yet.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Supplier</th>
+          <th>Total</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (purchase of purchases(); track purchase.id) {
+          <tr>
+            <td>{{ purchase.purchaseDate | date: 'MMM d, y, h:mm a' }}</td>
+            <td>{{ purchase.supplierName }}</td>
+            <td>{{ purchase.totalAmount | number: '1.2-2' }}</td>
+            <td class="actions-column">
+              <button type="button" class="btn-link" (click)="togglePurchaseDetails(purchase.id)">
+                {{ expandedPurchaseId() === purchase.id ? 'Hide' : 'View' }}
+              </button>
+            </td>
+          </tr>
+          @if (expandedPurchaseId() === purchase.id) {
+            <tr class="details-row">
+              <td colspan="4">
+                <table class="data-table nested-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Qty</th>
+                      <th>Unit Cost</th>
+                      <th>Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of purchase.purchaseItems; track item.productId) {
+                      <tr>
+                        <td>{{ item.productName }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unitCost | number: '1.2-2' }}</td>
+                        <td>{{ item.unitCost * item.quantity | number: '1.2-2' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>

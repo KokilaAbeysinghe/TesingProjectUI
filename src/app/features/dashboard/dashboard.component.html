@@ -6,7 +6,7 @@
 <div class="welcome-panel">
   <h2>Hello, {{ userEmail }}</h2>
   <p>You are signed in as <strong>{{ userRole }}</strong>.</p>
-  <p class="welcome-note">Use the sidebar menu to navigate. More features like Sales and Customers will be added next.</p>
+  <p class="welcome-note">Use the sidebar menu to navigate through your hardware shop POS system.</p>
 </div>
 
 <div class="stats-grid">
@@ -20,14 +20,50 @@
     <span class="stat-value">{{ categoryCount() ?? '—' }}</span>
     <span class="stat-sub">Organize products</span>
   </a>
-  <div class="stat-card">
-    <span class="stat-label">Sales</span>
-    <span class="stat-value">Coming soon</span>
-    <span class="stat-sub">Process transactions</span>
-  </div>
-  <div class="stat-card">
+  <a class="stat-card" routerLink="/app/customers">
     <span class="stat-label">Customers</span>
-    <span class="stat-value">Coming soon</span>
+    <span class="stat-value">{{ customerCount() ?? '—' }}</span>
     <span class="stat-sub">Customer records</span>
+  </a>
+  <a class="stat-card" routerLink="/app/sales">
+    <span class="stat-label">Sales</span>
+    <span class="stat-value">{{ saleCount() ?? '—' }}</span>
+    <span class="stat-sub">Process transactions</span>
+  </a>
+</div>
+
+<div class="low-stock-panel">
+  <div class="low-stock-header">
+    <h3>Low Stock Products</h3>
+    <span class="low-stock-note">Stock at or below {{ lowStockThreshold }}</span>
   </div>
+
+  @if (lowStockProducts().length === 0) {
+    <p class="empty-text">All products are above the low stock level.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Category</th>
+          <th>Stock</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (product of lowStockProducts(); track product.id) {
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.categoryName }}</td>
+            <td>
+              <span class="stock-badge" [class.stock-critical]="product.stock === 0">{{ product.stock }}</span>
+            </td>
+            <td class="actions-column">
+              <a class="btn-link" routerLink="/app/inventory">Adjust Stock</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
 </div>

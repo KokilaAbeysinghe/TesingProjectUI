@@ -13,3 +13,10 @@ export interface CreateProductRequest {
   price: number;
   stock: number;
 }
+
+export type StockAdjustmentType = 'Add' | 'Remove';
+
+export interface AdjustStockRequest {
+  quantity: number;
+  adjustmentType: StockAdjustmentType;
+}

@@ -40,6 +40,30 @@ export const routes: Routes = [
         loadComponent: () => import('./features/product/product.component').then(m => m.ProductComponent)
       },
       {
+        path: 'inventory',
+        loadComponent: () => import('./features/inventory/inventory.component').then(m => m.InventoryComponent)
+      },
+      {
+        path: 'suppliers',
+        loadComponent: () => import('./features/supplier/supplier.component').then(m => m.SupplierComponent)
+      },
+      {
+        path: 'purchases',
+        loadComponent: () => import('./features/purchase/purchase.component').then(m => m.PurchaseComponent)
+      },
+      {
+        path: 'customers',
+        loadComponent: () => import('./features/customer/customer.component').then(m => m.CustomerComponent)
+      },
+      {
+        path: 'sales',
+        loadComponent: () => import('./features/sale/sale.component').then(m => m.SaleComponent)
+      },
+      {
+        path: 'reports',
+        loadComponent: () => import('./features/report/report.component').then(m => m.ReportComponent)
+      },
+      {
         path: 'staff',
         loadComponent: () => import('./features/user/user.component').then(m => m.UserComponent)
       },

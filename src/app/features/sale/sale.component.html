@@ -8,27 +8,49 @@
   <h3>New Sale</h3>
 
   <form [formGroup]="saleForm" class="customer-form">
-    <div class="form-group">
-      <label for="customerId">Customer</label>
-      <select id="customerId" formControlName="customerId">
-        <option [ngValue]="0" disabled>Select a customer</option>
-        @for (customer of customers(); track customer.id) {
-          <option [ngValue]="customer.id">{{ customer.name }} ({{ customer.phone }})</option>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="customerId">Customer</label>
+        <select id="customerId" formControlName="customerId">
+          <option [ngValue]="0" disabled>Select a customer</option>
+          @for (customer of customers(); track customer.id) {
+            <option [ngValue]="customer.id">{{ customer.name }} ({{ customer.phone }})</option>
+          }
+        </select>
+        @if (saleForm.get('customerId')?.invalid && saleForm.get('customerId')?.touched) {
+          <span class="field-error">Customer is required.</span>
         }
-      </select>
-      @if (saleForm.get('customerId')?.invalid && saleForm.get('customerId')?.touched) {
-        <span class="field-error">Customer is required.</span>
-      }
+      </div>
+
+      <div class="form-group">
+        <label for="paymentMethod">Payment Method</label>
+        <select id="paymentMethod" formControlName="paymentMethod">
+          @for (method of paymentMethods; track method) {
+            <option [ngValue]="method">{{ method }}</option>
+          }
+        </select>
+      </div>
     </div>
   </form>
 
   <form [formGroup]="itemForm" (ngSubmit)="addItemToCart()" class="item-form">
     <div class="form-row">
+      <div class="form-group search-group">
+        <label for="productSearch">Search Product</label>
+        <input
+          id="productSearch"
+          type="text"
+          [value]="productSearch()"
+          (input)="updateProductSearch($any($event.target).value)"
+          placeholder="Type product name..."
+        />
+      </div>
+
       <div class="form-group product-group">
         <label for="productId">Product</label>
         <select id="productId" formControlName="productId">
           <option [ngValue]="0" disabled>Select a product</option>
-          @for (product of products(); track product.id) {
+          @for (product of filteredProducts(); track product.id) {
             <option [ngValue]="product.id">{{ product.name }} — LKR {{ product.price | number: '1.2-2' }} ({{ product.stock }} in stock)</option>
           }
         </select>
@@ -41,6 +63,9 @@
 
       <button type="submit" class="btn btn-secondary add-item-button">+ Add Item</button>
     </div>
+    @if (filteredProducts().length === 0) {
+      <span class="field-error">No products match your search.</span>
+    }
     @if (itemErrorMessage()) {
       <span class="field-error">{{ itemErrorMessage() }}</span>
     }
@@ -99,25 +124,71 @@
         <tr>
           <th>Date</th>
           <th>Customer</th>
+          <th>Payment</th>
           <th>Total</th>
+          <th>Status</th>
           <th class="actions-column">Actions</th>
         </tr>
       </thead>
       <tbody>
         @for (sale of sales(); track sale.id) {
-          <tr>
-            <td>{{ sale.saleDate | date: 'MMM d, y, h:mm a' }}</td>
-            <td>{{ sale.customerName }}</td>
-            <td>{{ sale.totalAmount | number: '1.2-2' }}</td>
-            <td class="actions-column">
-              <button type="button" class="btn-link" (click)="toggleSaleDetails(sale.id)">
-                {{ expandedSaleId() === sale.id ? 'Hide' : 'View' }}
-              </button>
-            </td>
-          </tr>
+          @if (editingSale()?.id === sale.id) {
+            <tr class="edit-row">
+              <td colspan="6">
+                <form [formGroup]="editForm" (ngSubmit)="submitEditSale()" class="edit-sale-form">
+                  <div class="form-group">
+                    <label for="editCustomerId">Customer</label>
+                    <select id="editCustomerId" formControlName="customerId">
+                      <option [ngValue]="0" disabled>Select a customer</option>
+                      @for (customer of customers(); track customer.id) {
+                        <option [ngValue]="customer.id">{{ customer.name }} ({{ customer.phone }})</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="editPaymentMethod">Payment Method</label>
+                    <select id="editPaymentMethod" formControlName="paymentMethod">
+                      @for (method of paymentMethods; track method) {
+                        <option [ngValue]="method">{{ method }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="edit-sale-actions">
+                    <button type="submit" class="btn btn-primary" [disabled]="isSaving()">Save</button>
+                    <button type="button" class="btn btn-secondary" (click)="cancelEditSale()">Cancel</button>
+                  </div>
+                </form>
+                @if (editErrorMessage()) {
+                  <span class="field-error">{{ editErrorMessage() }}</span>
+                }
+              </td>
+            </tr>
+          } @else {
+            <tr [class.voided-row]="sale.status === 'Voided'">
+              <td>{{ sale.saleDate | date: 'MMM d, y, h:mm a' }}</td>
+              <td>{{ sale.customerName }}</td>
+              <td>{{ sale.paymentMethod }}</td>
+              <td>{{ sale.totalAmount | number: '1.2-2' }}</td>
+              <td>
+                <span class="status-badge" [class.status-voided]="sale.status === 'Voided'">{{ sale.status }}</span>
+              </td>
+              <td class="actions-column">
+                <button type="button" class="btn-link" (click)="toggleSaleDetails(sale.id)">
+                  {{ expandedSaleId() === sale.id ? 'Hide' : 'View' }}
+                </button>
+                <button type="button" class="btn-link" (click)="printSale(sale)">Print</button>
+                @if (canManageSale && sale.status === 'Completed') {
+                  <button type="button" class="btn-link" (click)="openEditSale(sale)">Edit</button>
+                  <button type="button" class="btn-link btn-link-danger" [disabled]="isVoiding()" (click)="voidSale(sale)">Void</button>
+                }
+              </td>
+            </tr>
+          }
           @if (expandedSaleId() === sale.id) {
             <tr class="details-row">
-              <td colspan="4">
+              <td colspan="6">
                 <table class="data-table nested-table">
                   <thead>
                     <tr>
@@ -146,3 +217,41 @@
     </table>
   }
 </div>
+
+@if (printingSale()) {
+  <div class="receipt-print">
+    <h2>Nelson Group</h2>
+    <p class="receipt-line">Receipt #{{ printingSale()!.id }}</p>
+    <p class="receipt-line">{{ printingSale()!.saleDate | date: 'MMM d, y, h:mm a' }}</p>
+    @if (printingSale()!.status === 'Voided') {
+      <p class="receipt-void-label">VOID</p>
+    }
+    <hr />
+    <p class="receipt-line">Customer: {{ printingSale()!.customerName }}</p>
+    <p class="receipt-line">Payment Method: {{ printingSale()!.paymentMethod }}</p>
+    <hr />
+    <table class="receipt-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of printingSale()!.saleItems; track item.productId) {
+          <tr>
+            <td>{{ item.productName }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.unitPrice | number: '1.2-2' }}</td>
+            <td>{{ item.unitPrice * item.quantity | number: '1.2-2' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <hr />
+    <p class="receipt-total">Total: LKR {{ printingSale()!.totalAmount | number: '1.2-2' }}</p>
+    <p class="receipt-line receipt-thanks">Thank you for your purchase!</p>
+  </div>
+}
