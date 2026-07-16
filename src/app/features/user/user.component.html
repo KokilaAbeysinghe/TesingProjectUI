@@ -1,0 +1,110 @@
+<app-page-header title="Staff" subtitle="Manage shop staff accounts and roles" />
+
+@if (errorMessage()) {
+  <div class="alert alert-error">{{ errorMessage() }}</div>
+}
+
+<div class="toolbar">
+  <button type="button" class="btn btn-primary" (click)="openAddForm()">+ Add Staff</button>
+</div>
+
+@if (showForm()) {
+  <div class="form-panel">
+    <h3>{{ editingUserId() ? 'Edit Staff' : 'Add Staff' }}</h3>
+    <form [formGroup]="form" class="user-form">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input id="name" type="text" formControlName="name" placeholder="Staff name" />
+        @if (form.get('name')?.invalid && form.get('name')?.touched) {
+          <span class="field-error">Name is required and must be under 100 characters.</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email" placeholder="staff@example.com" />
+        @if (form.get('email')?.invalid && form.get('email')?.touched) {
+          <span class="field-error">Valid email is required.</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="contactNumber">Contact Number</label>
+        <input id="contactNumber" type="text" formControlName="contactNumber" placeholder="e.g. 0771234567" />
+        @if (form.get('contactNumber')?.hasError('required') && form.get('contactNumber')?.touched) {
+          <span class="field-error">Contact number is required.</span>
+        }
+        @if (form.get('contactNumber')?.hasError('sriLankanPhone') && form.get('contactNumber')?.touched) {
+          <span class="field-error">Enter a valid phone number (e.g. 0771234567).</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="role">Role</label>
+        <select id="role" formControlName="role">
+          @for (role of roles; track role) {
+            <option [ngValue]="role">{{ role }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="password">{{ editingUserId() ? 'New Password (optional)' : 'Password' }}</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          [placeholder]="editingUserId() ? 'Leave blank to keep current password' : 'At least 8 characters'"
+          autocomplete="new-password"
+        />
+        @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
+          <span class="field-error">Password is required.</span>
+        }
+        @if (form.get('password')?.hasError('minlength') && form.get('password')?.touched) {
+          <span class="field-error">Password must be at least 8 characters.</span>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+        <button type="button" class="btn btn-primary" [disabled]="isSaving()" (click)="submit()">
+          @if (isSaving()) { Saving... } @else { Save }
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+<div class="table-card">
+  @if (isLoading()) {
+    <p class="loading-text">Loading staff...</p>
+  } @else if (users().length === 0) {
+    <p class="empty-text">No staff members yet. Add your first staff member above.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Contact</th>
+          <th>Role</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.id) {
+          <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.contactNumber }}</td>
+            <td><span class="role-badge">{{ user.role }}</span></td>
+            <td class="actions-column">
+              <button type="button" class="btn-link" (click)="openEditForm(user)">Edit</button>
+              <button type="button" class="btn-link btn-link-danger" (click)="deleteUser(user)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

@@ -7,6 +7,7 @@ interface NavItem {
   label: string;
   icon: string;
   route: string;
+  adminOnly?: boolean;
 }
 
 @Component({
@@ -20,11 +21,18 @@ export class SidebarComponent {
   readonly #authService = inject(AuthService);
   readonly #router = inject(Router);
 
-  readonly navItems: NavItem[] = [
+  readonly #allNavItems: NavItem[] = [
     { label: 'Dashboard', icon: '📊', route: '/app/dashboard' },
     { label: 'Products', icon: '📦', route: '/app/products' },
-    { label: 'Categories', icon: '🗂️', route: '/app/categories' }
+    { label: 'Categories', icon: '🗂️', route: '/app/categories' },
+    { label: 'Staff', icon: '🧑‍💼', route: '/app/staff', adminOnly: true }
   ];
+
+  get navItems(): NavItem[] {
+    const role = this.#authService.getUserRole();
+
+    return this.#allNavItems.filter(item => !item.adminOnly || role === 'Admin');
+  }
 
   get userEmail(): string | null {
     return this.#authService.getUserEmail();

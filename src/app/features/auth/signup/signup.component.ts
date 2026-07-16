@@ -24,8 +24,7 @@ export class SignupComponent {
     name: ['', [Validators.required, Validators.maxLength(100)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(50)]],
     contactNumber: ['', [Validators.required, Validators.maxLength(10)]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    role: ['Cashier']
+    password: ['', [Validators.required, Validators.minLength(6)]]
   });
 
   submit(): void {
@@ -38,14 +37,13 @@ export class SignupComponent {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    const { name, email, contactNumber, password, role } = this.form.getRawValue();
+    const { name, email, contactNumber, password } = this.form.getRawValue();
 
     this.#authService.register({
       name: name!,
       email: email!,
       contactNumber: contactNumber!,
-      password: password!,
-      role: role!
+      password: password!
     }).subscribe({
       next: () => this.#router.navigate(['/app/dashboard']),
       error: (error: HttpErrorResponse) => {
