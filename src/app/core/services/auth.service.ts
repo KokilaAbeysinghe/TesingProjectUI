@@ -49,6 +49,12 @@ export class AuthService {
     return user ? JSON.parse(user).role : null;
   }
 
+  getUserId(): number | null {
+    const user = localStorage.getItem(this.#userKey);
+
+    return user ? JSON.parse(user).userId : null;
+  }
+
   isLoggedIn(): boolean {
     const token = this.getToken();
     if (!token) {

@@ -1,0 +1,113 @@
+<app-page-header title="Inventory" subtitle="View stock levels and adjust product quantities" />
+
+@if (errorMessage()) {
+  <div class="alert alert-error">{{ errorMessage() }}</div>
+}
+
+@if (successMessage()) {
+  <div class="alert alert-success">{{ successMessage() }}</div>
+}
+
+@if (canAdjustStock) {
+  <div class="form-panel">
+    <h3>Adjust Stock</h3>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="adjust-form">
+      <div class="form-row">
+        <div class="form-group product-group">
+          <label for="productId">Product</label>
+          <select id="productId" formControlName="productId">
+            <option [ngValue]="0" disabled>Select a product</option>
+            @for (product of products(); track product.id) {
+              <option [ngValue]="product.id">{{ product.name }} ({{ product.stock }} in stock)</option>
+            }
+          </select>
+          @if (form.get('productId')?.invalid && form.get('productId')?.touched) {
+            <span class="field-error">Product is required.</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="adjustmentType">Type</label>
+          <select id="adjustmentType" formControlName="adjustmentType">
+            @for (type of adjustmentTypes; track type) {
+              <option [ngValue]="type">{{ type }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group quantity-group">
+          <label for="quantity">Quantity</label>
+          <input id="quantity" type="number" min="1" formControlName="quantity" />
+          @if (form.get('quantity')?.invalid && form.get('quantity')?.touched) {
+            <span class="field-error">Quantity must be at least 1.</span>
+          }
+        </div>
+
+        <button type="submit" class="btn btn-primary adjust-button" [disabled]="isSaving()">
+          @if (isSaving()) { Saving... } @else { Apply }
+        </button>
+      </div>
+
+      @if (selectedProduct) {
+        <p class="current-stock">Current stock for <strong>{{ selectedProduct.name }}</strong>: {{ selectedProduct.stock }}</p>
+      }
+    </form>
+  </div>
+}
+
+<div class="table-card">
+  <div class="table-toolbar">
+    <h3>Stock Levels</h3>
+    <div class="form-group search-group">
+      <label for="inventorySearch">Search</label>
+      <input
+        id="inventorySearch"
+        type="text"
+        [value]="productSearch()"
+        (input)="updateProductSearch($any($event.target).value)"
+        placeholder="Search by product or category..."
+      />
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <p class="loading-text">Loading inventory...</p>
+  } @else if (filteredProducts().length === 0) {
+    <p class="empty-text">No products found.</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Category</th>
+          <th>Stock</th>
+          @if (canAdjustStock) {
+            <th class="actions-column">Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (product of filteredProducts(); track product.id) {
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.categoryName }}</td>
+            <td>
+              <span
+                class="stock-badge"
+                [class.stock-low]="product.stock > 0 && product.stock <= 10"
+                [class.stock-critical]="product.stock === 0"
+              >
+                {{ product.stock }}
+              </span>
+            </td>
+            @if (canAdjustStock) {
+              <td class="actions-column">
+                <button type="button" class="btn-link" (click)="selectProduct(product)">Adjust</button>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

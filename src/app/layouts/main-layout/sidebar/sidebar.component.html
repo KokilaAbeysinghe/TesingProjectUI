@@ -1,8 +1,8 @@
 <aside class="sidebar">
   <div class="sidebar-brand">
-    <span class="brand-icon">🔧</span>
-    <span class="brand-name">Hardware Shop POS</span>
-  </div>
+  <mat-icon class="brand-icon">build</mat-icon>
+  <span class="brand-name">Hardware Shop POS</span>
+</div>
 
   <nav class="sidebar-nav">
     @for (item of navItems; track item.route) {
@@ -11,7 +11,7 @@
         routerLinkActive="active"
         class="nav-item"
       >
-        <span class="nav-icon">{{ item.icon }}</span>
+        <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
         <span class="nav-label">{{ item.label }}</span>
       </a>
     }
