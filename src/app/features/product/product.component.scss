@@ -12,9 +12,38 @@
 
 .toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
   min-height: 2.5rem;
   margin-bottom: 1rem;
+}
+.search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  max-width: 280px;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $color-text;
+  }
+
+  input {
+    padding: 0.625rem 0.875rem;
+    border: 1px solid $color-border-input;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+
+    &:focus {
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+  }
 }
 
 .btn {

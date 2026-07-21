@@ -1,8 +1,10 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Subscription, forkJoin } from 'rxjs';
 
 import { Product } from '../../core/models/product.model';
+import { Sale } from '../../core/models/sale.model';
 import { AuthService } from '../../core/services/auth.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { ProductCategoryService } from '../../core/services/product-category.service';
@@ -13,7 +15,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [PageHeaderComponent, RouterLink],
+  imports: [DecimalPipe, PageHeaderComponent, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -31,6 +33,8 @@ export class DashboardComponent implements OnDestroy {
   readonly categoryCount = signal<number | null>(null);
   readonly customerCount = signal<number | null>(null);
   readonly saleCount = signal<number | null>(null);
+  readonly todaySalesCount = signal<number | null>(null);
+  readonly todayRevenue = signal<number | null>(null);
   readonly lowStockProducts = signal<Product[]>([]);
 
   constructor() {
@@ -41,10 +45,16 @@ export class DashboardComponent implements OnDestroy {
       sales: this.#saleService.getAll()
     }).subscribe({
       next: ({ products, categories, customers, sales }) => {
+        const todaySales = sales.filter(sale => this.#isTodaySale(sale));
+
         this.productCount.set(products.length);
         this.categoryCount.set(categories.length);
         this.customerCount.set(customers.length);
         this.saleCount.set(sales.length);
+        this.todaySalesCount.set(todaySales.length);
+        this.todayRevenue.set(
+          todaySales.reduce((total, sale) => total + sale.totalAmount, 0)
+        );
         this.lowStockProducts.set(
           products
             .filter(product => product.stock <= this.#lowStockThreshold)
@@ -56,6 +66,8 @@ export class DashboardComponent implements OnDestroy {
         this.categoryCount.set(null);
         this.customerCount.set(null);
         this.saleCount.set(null);
+        this.todaySalesCount.set(null);
+        this.todayRevenue.set(null);
         this.lowStockProducts.set([]);
       }
     });
@@ -77,5 +89,18 @@ export class DashboardComponent implements OnDestroy {
 
   get lowStockThreshold(): number {
     return this.#lowStockThreshold;
+  }
+
+  #isTodaySale(sale: Sale): boolean {
+    if (sale.status === 'Voided') {
+      return false;
+    }
+
+    const saleDate = new Date(sale.saleDate);
+    const today = new Date();
+
+    return saleDate.getFullYear() === today.getFullYear()
+      && saleDate.getMonth() === today.getMonth()
+      && saleDate.getDate() === today.getDate();
   }
 }

@@ -5,6 +5,17 @@
 }
 
 <div class="toolbar">
+  <div class="search-group">
+    <label for="productSearch">Search</label>
+    <input
+      id="productSearch"
+      type="text"
+      [value]="productSearch()"
+      (input)="updateProductSearch($any($event.target).value)"
+      placeholder="Search by name or category..."
+    />
+  </div>
+
   @if (canAddProduct) {
     <button type="button" class="btn btn-primary" (click)="openAddForm()">+ Add Product</button>
   }
@@ -68,6 +79,8 @@
     <p class="loading-text">Loading products...</p>
   } @else if (products().length === 0) {
     <p class="empty-text">No products yet. Add your first product above.</p>
+  } @else if (filteredProducts().length === 0) {
+    <p class="empty-text">No products match your search.</p>
   } @else {
     <table class="data-table">
       <thead>
@@ -80,7 +93,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (product of products(); track product.id) {
+        @for (product of filteredProducts(); track product.id) {
           <tr>
             <td>{{ product.name }}</td>
             <td>{{ product.categoryName }}</td>

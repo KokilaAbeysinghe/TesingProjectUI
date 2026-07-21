@@ -9,6 +9,31 @@
   <p class="welcome-note">Use the sidebar menu to navigate through your hardware shop POS system.</p>
 </div>
 
+<div class="today-panel">
+  <div class="today-header">
+    <h3>Today's Totals</h3>
+    <span class="today-note">Completed sales for today</span>
+  </div>
+  <div class="today-grid">
+    <a class="stat-card today-card" routerLink="/app/sales">
+      <span class="stat-label">Today's Sales</span>
+      <span class="stat-value">{{ todaySalesCount() ?? '—' }}</span>
+      <span class="stat-sub">Completed today</span>
+    </a>
+    <a class="stat-card today-card" routerLink="/app/reports">
+      <span class="stat-label">Today's Revenue</span>
+      <span class="stat-value">
+        @if (todayRevenue() === null) {
+          —
+        } @else {
+          LKR {{ todayRevenue()! | number: '1.2-2' }}
+        }
+      </span>
+      <span class="stat-sub">From completed sales</span>
+    </a>
+  </div>
+</div>
+
 <div class="stats-grid">
   <a class="stat-card" routerLink="/app/products">
     <span class="stat-label">Products</span>
@@ -26,7 +51,7 @@
     <span class="stat-sub">Customer records</span>
   </a>
   <a class="stat-card" routerLink="/app/sales">
-    <span class="stat-label">Sales</span>
+    <span class="stat-label">All Sales</span>
     <span class="stat-value">{{ saleCount() ?? '—' }}</span>
     <span class="stat-sub">Process transactions</span>
   </a>

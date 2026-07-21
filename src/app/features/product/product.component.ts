@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, forkJoin } from 'rxjs';
 
@@ -27,6 +27,22 @@ export class ProductComponent implements OnDestroy {
 
   readonly products = signal<Product[]>([]);
   readonly categories = signal<ProductCategory[]>([]);
+  readonly productSearch = signal('');
+
+  readonly filteredProducts = computed(() => {
+    const search = this.productSearch().trim().toLowerCase();
+    const products = this.products();
+
+    if (!search) {
+      return products;
+    }
+
+    return products.filter(product =>
+      product.name.toLowerCase().includes(search) ||
+      product.categoryName.toLowerCase().includes(search)
+    );
+  });
+
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly errorMessage = signal('');
@@ -56,6 +72,10 @@ export class ProductComponent implements OnDestroy {
 
   get canDeleteProduct(): boolean {
     return this.#authService.getUserRole() === 'Admin';
+  }
+
+  updateProductSearch(value: string): void {
+    this.productSearch.set(value);
   }
 
   loadData(): void {
