@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { SalesSummary, TopProduct } from '../models/report.model';
+import { PaymentMethodSummary, SalesSummary, TopProduct } from '../models/report.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReportService {
@@ -17,6 +17,12 @@ export class ReportService {
   getTopProducts(startDate: string, endDate: string, count: number): Observable<TopProduct[]> {
     return this.#http.get<TopProduct[]>(`${this.#baseUrl}/top-products`, {
       params: { startDate, endDate, count: count.toString() }
+    });
+  }
+
+  getPaymentMethodSummary(startDate: string, endDate: string): Observable<PaymentMethodSummary[]> {
+    return this.#http.get<PaymentMethodSummary[]>(`${this.#baseUrl}/payment-methods`, {
+      params: { startDate, endDate }
     });
   }
 

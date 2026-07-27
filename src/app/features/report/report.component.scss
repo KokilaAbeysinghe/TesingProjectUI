@@ -62,6 +62,55 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
 }
 
+.preset-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.preset-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $color-text;
+}
+
+.preset-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  background: $color-background-alt;
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+.preset-tab {
+  padding: 0.4rem 0.9rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: $color-text-muted;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+
+  &.active {
+    background: $color-surface;
+    color: $color-primary;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  &:hover:not(.active):not(:disabled) {
+    color: $color-text;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
 .filter-form {
   display: flex;
   align-items: flex-end;
@@ -145,6 +194,37 @@
   text-align: center;
   padding: 1.5rem 0;
   margin: 0;
+}
+
+.table-card + .table-card {
+  margin-top: 1.5rem;
+}
+
+.share-bar {
+  position: relative;
+  width: 100%;
+  min-width: 120px;
+  height: 1.5rem;
+  background: $color-background-alt;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.share-bar-fill {
+  height: 100%;
+  background: $color-primary-light;
+  border-right: 2px solid $color-primary;
+}
+
+.share-bar-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $color-text;
 }
 
 .data-table {

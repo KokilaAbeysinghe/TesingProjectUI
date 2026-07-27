@@ -30,9 +30,9 @@ export class SidebarComponent {
   { label: 'Suppliers', icon: 'local_shipping', route: '/app/suppliers' },
   { label: 'Purchases', icon: 'shopping_cart', route: '/app/purchases' },
   { label: 'Categories', icon: 'category', route: '/app/categories' },
-  { label: 'Customers', icon: 'group', route: '/app/customers' },
+  { label: 'Customers', icon: 'person_pin_circle', route: '/app/customers' },
   { label: 'Reports', icon: 'assessment', route: '/app/reports' },
-  { label: 'Staff', icon: 'badge', route: '/app/staff', adminOnly: true }
+  { label: 'Staff', icon: 'group', route: '/app/staff', adminOnly: true }
 ];
   
 

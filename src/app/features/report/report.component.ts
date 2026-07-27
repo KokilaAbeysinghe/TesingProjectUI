@@ -1,10 +1,11 @@
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, forkJoin } from 'rxjs';
 
-import { SalesSummary, TopProduct } from '../../core/models/report.model';
+import { DatePreset, DatePresetKey } from '../../core/models/date-preset.model';
+import { PaymentMethodSummary, SalesSummary, TopProduct } from '../../core/models/report.model';
 import { ReportService } from '../../core/services/report.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
@@ -20,14 +21,30 @@ export class ReportComponent implements OnDestroy {
   readonly #reportService = inject(ReportService);
   readonly #subscriptions = new Subscription();
 
+  readonly datePresets: DatePreset[] = [
+    { key: 'today', label: 'Today' },
+    { key: 'yesterday', label: 'Yesterday' },
+    { key: 'last7Days', label: 'Last 7 Days' },
+    { key: 'last30Days', label: 'Last 30 Days' },
+    { key: 'thisMonth', label: 'This Month' },
+    { key: 'lastMonth', label: 'Last Month' }
+  ];
+
   readonly summary = signal<SalesSummary | null>(null);
   readonly topProducts = signal<TopProduct[]>([]);
+  readonly paymentMethodSummary = signal<PaymentMethodSummary[]>([]);
 
   readonly isLoading = signal(false);
   readonly isDownloading = signal(false);
 
   readonly errorMessage = signal('');
   readonly exportErrorMessage = signal('');
+
+  readonly selectedPreset = signal<DatePresetKey | null>('last30Days');
+
+  readonly paymentMethodTotal = computed(() =>
+    this.paymentMethodSummary().reduce((total, method) => total + method.totalAmount, 0)
+  );
 
   form = this.#formBuilder.group({
     startDate: [this.#defaultStartDate(), [Validators.required]],
@@ -36,6 +53,12 @@ export class ReportComponent implements OnDestroy {
 
   constructor() {
     this.generateReport();
+
+    const formChangeSubscription = this.form.valueChanges.subscribe(() => {
+      this.selectedPreset.set(null);
+    });
+
+    this.#subscriptions.add(formChangeSubscription);
   }
 
   ngOnDestroy(): void {
@@ -62,25 +85,37 @@ export class ReportComponent implements OnDestroy {
     this.errorMessage.set('');
     this.summary.set(null);
     this.topProducts.set([]);
+    this.paymentMethodSummary.set([]);
 
     const subscription = forkJoin({
       summary: this.#reportService.getSalesSummary(startDate!, endDate!),
-      topProducts: this.#reportService.getTopProducts(startDate!, endDate!, 5)
+      topProducts: this.#reportService.getTopProducts(startDate!, endDate!, 5),
+      paymentMethodSummary: this.#reportService.getPaymentMethodSummary(startDate!, endDate!)
     }).subscribe({
-      next: ({ summary, topProducts }) => {
+      next: ({ summary, topProducts, paymentMethodSummary }) => {
         this.summary.set(summary);
         this.topProducts.set(topProducts);
+        this.paymentMethodSummary.set(paymentMethodSummary);
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage.set(this.#getErrorMessage(error, 'Failed to generate report.'));
         this.summary.set(null);
         this.topProducts.set([]);
+        this.paymentMethodSummary.set([]);
         this.isLoading.set(false);
       }
     });
 
     this.#subscriptions.add(subscription);
+  }
+
+  applyPreset(preset: DatePresetKey): void {
+    const range = this.#getPresetRange(preset);
+
+    this.form.patchValue(range);
+    this.selectedPreset.set(preset);
+    this.generateReport();
   }
 
   downloadExcel(): void {
@@ -116,6 +151,12 @@ export class ReportComponent implements OnDestroy {
     this.#subscriptions.add(subscription);
   }
 
+  getPaymentMethodPercentage(totalAmount: number): number {
+    const total = this.paymentMethodTotal();
+
+    return total === 0 ? 0 : (totalAmount / total) * 100;
+  }
+
   #saveFile(blob: Blob, fileName: string): void {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -123,6 +164,50 @@ export class ReportComponent implements OnDestroy {
     link.download = fileName;
     link.click();
     window.URL.revokeObjectURL(url);
+  }
+
+  #getPresetRange(preset: DatePresetKey): { startDate: string; endDate: string } {
+    const today = new Date();
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    switch (preset) {
+      case 'today':
+        return { startDate: this.#toLocalDateValue(end), endDate: this.#toLocalDateValue(end) };
+
+      case 'yesterday': {
+        const yesterday = new Date(end);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        return { startDate: this.#toLocalDateValue(yesterday), endDate: this.#toLocalDateValue(yesterday) };
+      }
+
+      case 'last7Days': {
+        const start = new Date(end);
+        start.setDate(start.getDate() - 6);
+
+        return { startDate: this.#toLocalDateValue(start), endDate: this.#toLocalDateValue(end) };
+      }
+
+      case 'last30Days': {
+        const start = new Date(end);
+        start.setDate(start.getDate() - 29);
+
+        return { startDate: this.#toLocalDateValue(start), endDate: this.#toLocalDateValue(end) };
+      }
+
+      case 'thisMonth': {
+        const start = new Date(end.getFullYear(), end.getMonth(), 1);
+
+        return { startDate: this.#toLocalDateValue(start), endDate: this.#toLocalDateValue(end) };
+      }
+
+      case 'lastMonth': {
+        const start = new Date(end.getFullYear(), end.getMonth() - 1, 1);
+        const lastDay = new Date(end.getFullYear(), end.getMonth(), 0);
+
+        return { startDate: this.#toLocalDateValue(start), endDate: this.#toLocalDateValue(lastDay) };
+      }
+    }
   }
 
   #defaultStartDate(): string {

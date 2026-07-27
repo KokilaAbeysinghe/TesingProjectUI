@@ -1,3 +1,5 @@
+import { PaymentMethod } from './sale.model';
+
 export interface SalesSummary {
   startDate: string;
   endDate: string;
@@ -11,4 +13,10 @@ export interface TopProduct {
   productName: string;
   quantitySold: number;
   revenue: number;
+}
+
+export interface PaymentMethodSummary {
+  paymentMethod: PaymentMethod;
+  salesCount: number;
+  totalAmount: number;
 }
