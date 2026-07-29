@@ -29,6 +29,7 @@ export class CustomerComponent implements OnDestroy {
 
   form = this.#formBuilder.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
+    lastName: ['', [Validators.required, Validators.maxLength(100)]],
     phone: ['', [Validators.required, Validators.maxLength(15), sriLankanPhoneValidator()]]
   });
 
@@ -45,8 +46,11 @@ export class CustomerComponent implements OnDestroy {
     this.errorMessage.set('');
 
     const subscription = this.#customerService.getAll().subscribe({
-      next: customers => {
-        this.customers.set(customers);
+      next: receivedCustomers => {
+        this.customers.set(receivedCustomers);
+
+        console.log("AAAA" ,this.customers())
+
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -60,13 +64,13 @@ export class CustomerComponent implements OnDestroy {
 
   openAddForm(): void {
     this.editingCustomerId.set(null);
-    this.form.reset({ name: '', phone: '' });
+    this.form.reset({ name: '',lastName: '', phone: '' });
     this.showForm.set(true);
   }
 
   openEditForm(customer: Customer): void {
     this.editingCustomerId.set(customer.id);
-    this.form.reset({ name: customer.name, phone: customer.phone });
+    this.form.reset({ name: customer.name, lastName: customer.lastName,phone: customer.phone });
     this.showForm.set(true);
   }
 
@@ -86,8 +90,8 @@ export class CustomerComponent implements OnDestroy {
     this.isSaving.set(true);
     this.errorMessage.set('');
 
-    const { name, phone } = this.form.getRawValue();
-    const request = { name: name!, phone: phone!.replace(/[\s-]/g, '') };
+    const { name,lastName, phone } = this.form.getRawValue();
+    const request = { name: name!, lastName: lastName!,phone: phone!.replace(/[\s-]/g, '') };
     const customerId = this.editingCustomerId();
 
 

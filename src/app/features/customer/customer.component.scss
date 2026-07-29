@@ -105,8 +105,8 @@
 
 .form-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
+  justify-content:left;
+  gap: 1.75rem;
 }
 
 .table-card {
@@ -136,6 +136,10 @@
     color: $color-text-muted;
     padding: 0.75rem;
     border-bottom: 1px solid $color-border;
+
+    &.actions-column {
+      text-align: right;
+    }
   }
 
   td {

@@ -9,6 +9,8 @@ import { PaymentMethodSummary, SalesSummary, TopProduct } from '../../core/model
 import { ReportService } from '../../core/services/report.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
+type ReportTabKey = 'summary' | 'topProducts' | 'paymentMethods';
+
 @Component({
   selector: 'app-report',
   standalone: true,
@@ -30,6 +32,12 @@ export class ReportComponent implements OnDestroy {
     { key: 'lastMonth', label: 'Last Month' }
   ];
 
+  readonly reportTabs = [
+    { key: 'summary' as ReportTabKey, label: 'Summary' },
+    { key: 'topProducts' as ReportTabKey, label: 'Top Products' },
+    { key: 'paymentMethods' as ReportTabKey, label: 'Payment Methods' }
+  ];
+
   readonly summary = signal<SalesSummary | null>(null);
   readonly topProducts = signal<TopProduct[]>([]);
   readonly paymentMethodSummary = signal<PaymentMethodSummary[]>([]);
@@ -41,9 +49,10 @@ export class ReportComponent implements OnDestroy {
   readonly exportErrorMessage = signal('');
 
   readonly selectedPreset = signal<DatePresetKey | null>('last30Days');
+  readonly activeReportTab = signal<ReportTabKey>('summary');
 
-  readonly paymentMethodTotal = computed(() =>
-    this.paymentMethodSummary().reduce((total, method) => total + method.totalAmount, 0)
+  readonly activeReportTabLabel = computed(
+    () => this.reportTabs.find(tab => tab.key === this.activeReportTab())?.label ?? ''
   );
 
   form = this.#formBuilder.group({
@@ -96,6 +105,7 @@ export class ReportComponent implements OnDestroy {
         this.summary.set(summary);
         this.topProducts.set(topProducts);
         this.paymentMethodSummary.set(paymentMethodSummary);
+        this.activeReportTab.set('summary');
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -118,6 +128,10 @@ export class ReportComponent implements OnDestroy {
     this.generateReport();
   }
 
+  selectReportTab(tabKey: ReportTabKey): void {
+    this.activeReportTab.set(tabKey);
+  }
+
   downloadExcel(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -137,9 +151,12 @@ export class ReportComponent implements OnDestroy {
     this.isDownloading.set(true);
     this.exportErrorMessage.set('');
 
-    const subscription = this.#reportService.exportToExcel(startDate!, endDate!).subscribe({
+    const reportType = this.activeReportTab();
+    const reportFileNamePart = this.#getReportFileNamePart(reportType);
+
+    const subscription = this.#reportService.exportToExcel(startDate!, endDate!, reportType).subscribe({
       next: blob => {
-        this.#saveFile(blob, `sales-report_${startDate}_to_${endDate}.xlsx`);
+        this.#saveFile(blob, `${reportFileNamePart}-report_${startDate}_to_${endDate}.xlsx`);
         this.isDownloading.set(false);
       },
       error: () => {
@@ -151,10 +168,17 @@ export class ReportComponent implements OnDestroy {
     this.#subscriptions.add(subscription);
   }
 
-  getPaymentMethodPercentage(totalAmount: number): number {
-    const total = this.paymentMethodTotal();
+  #getReportFileNamePart(reportType: ReportTabKey): string {
+    switch (reportType) {
+      case 'topProducts':
+        return 'top-products';
 
-    return total === 0 ? 0 : (totalAmount / total) * 100;
+      case 'paymentMethods':
+        return 'payment-methods';
+
+      case 'summary':
+        return 'summary';
+    }
   }
 
   #saveFile(blob: Blob, fileName: string): void {

@@ -43,7 +43,7 @@
       [disabled]="isDownloading()"
       (click)="downloadExcel()"
     >
-      @if (isDownloading()) { Downloading... } @else { Download Excel }
+      @if (isDownloading()) { Downloading... } @else { Download {{ activeReportTabLabel() }} Excel }
     </button>
   </form>
 
@@ -52,86 +52,107 @@
   }
 </div>
 
-@if (summary()) {
-  <div class="summary-cards">
-    <div class="summary-card">
-      <span class="summary-label">Total Revenue</span>
-      <span class="summary-value">LKR {{ summary()!.totalRevenue | number: '1.2-2' }}</span>
+<div class="report-tab-group">
+  <div class="report-tabs">
+    @for (tab of reportTabs; track tab.key) {
+      <button
+        type="button"
+        class="report-tab"
+        [class.active]="activeReportTab() === tab.key"
+        [disabled]="isLoading()"
+        (click)="selectReportTab(tab.key)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+</div>
+
+@if (activeReportTab() === 'summary') {
+  @if (isLoading()) {
+    <p class="loading-text">Loading report...</p>
+  } @else if (errorMessage()) {
+    <p class="empty-text">Report could not be loaded. Check the error above and try again.</p>
+  } @else if (summary()) {
+    <div class="summary-cards">
+      <div class="summary-card">
+        <span class="summary-label">Total Revenue</span>
+        <span class="summary-value">LKR {{ summary()!.totalRevenue | number: '1.2-2' }}</span>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Total Sales</span>
+        <span class="summary-value">{{ summary()!.totalSalesCount }}</span>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Items Sold</span>
+        <span class="summary-value">{{ summary()!.totalItemsSold }}</span>
+      </div>
     </div>
-    <div class="summary-card">
-      <span class="summary-label">Total Sales</span>
-      <span class="summary-value">{{ summary()!.totalSalesCount }}</span>
-    </div>
-    <div class="summary-card">
-      <span class="summary-label">Items Sold</span>
-      <span class="summary-value">{{ summary()!.totalItemsSold }}</span>
-    </div>
+  } @else {
+    <p class="empty-text">No sales found for the selected date range.</p>
+  }
+}
+
+@if (activeReportTab() === 'topProducts') {
+  <div class="table-card">
+    <h3>Top Selling Products</h3>
+    @if (isLoading()) {
+      <p class="loading-text">Loading report...</p>
+    } @else if (errorMessage()) {
+      <p class="empty-text">Report could not be loaded. Check the error above and try again.</p>
+    } @else if (topProducts().length === 0) {
+      <p class="empty-text">No sales found for the selected date range.</p>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Quantity Sold</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of topProducts(); track product.productId) {
+            <tr>
+              <td>{{ product.productName }}</td>
+              <td>{{ product.quantitySold }}</td>
+              <td>LKR {{ product.revenue | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   </div>
 }
 
-<div class="table-card">
-  <h3>Top Selling Products</h3>
-  @if (isLoading()) {
-    <p class="loading-text">Loading report...</p>
-  } @else if (errorMessage()) {
-    <p class="empty-text">Report could not be loaded. Check the error above and try again.</p>
-  } @else if (topProducts().length === 0) {
-    <p class="empty-text">No sales found for the selected date range.</p>
-  } @else {
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Quantity Sold</th>
-          <th>Revenue</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (product of topProducts(); track product.productId) {
+@if (activeReportTab() === 'paymentMethods') {
+  <div class="table-card">
+    <h3>Payment Method Breakdown</h3>
+    @if (isLoading()) {
+      <p class="loading-text">Loading report...</p>
+    } @else if (errorMessage()) {
+      <p class="empty-text">Report could not be loaded. Check the error above and try again.</p>
+    } @else if (paymentMethodSummary().length === 0) {
+      <p class="empty-text">No sales found for the selected date range.</p>
+    } @else {
+      <table class="data-table">
+        <thead>
           <tr>
-            <td>{{ product.productName }}</td>
-            <td>{{ product.quantitySold }}</td>
-            <td>LKR {{ product.revenue | number: '1.2-2' }}</td>
+            <th>Payment Method</th>
+            <th>Sales Count</th>
+            <th>Total Amount</th>
           </tr>
-        }
-      </tbody>
-    </table>
-  }
-</div>
-
-<div class="table-card">
-  <h3>Payment Method Breakdown</h3>
-  @if (isLoading()) {
-    <p class="loading-text">Loading report...</p>
-  } @else if (errorMessage()) {
-    <p class="empty-text">Report could not be loaded. Check the error above and try again.</p>
-  } @else if (paymentMethodSummary().length === 0) {
-    <p class="empty-text">No sales found for the selected date range.</p>
-  } @else {
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Payment Method</th>
-          <th>Sales Count</th>
-          <th>Total Amount</th>
-          <th>Share</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (method of paymentMethodSummary(); track method.paymentMethod) {
-          <tr>
-            <td>{{ method.paymentMethod }}</td>
-            <td>{{ method.salesCount }}</td>
-            <td>LKR {{ method.totalAmount | number: '1.2-2' }}</td>
-            <td>
-              <div class="share-bar">
-                <div class="share-bar-fill" [style.width.%]="getPaymentMethodPercentage(method.totalAmount)"></div>
-                <span class="share-bar-label">{{ getPaymentMethodPercentage(method.totalAmount) | number: '1.0-0' }}%</span>
-              </div>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  }
-</div>
+        </thead>
+        <tbody>
+          @for (method of paymentMethodSummary(); track method.paymentMethod) {
+            <tr>
+              <td>{{ method.paymentMethod }}</td>
+              <td>{{ method.salesCount }}</td>
+              <td>LKR {{ method.totalAmount | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}

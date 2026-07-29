@@ -26,9 +26,9 @@ export class ReportService {
     });
   }
 
-  exportToExcel(startDate: string, endDate: string): Observable<Blob> {
+  exportToExcel(startDate: string, endDate: string, reportType: string): Observable<Blob> {
     return this.#http.get(`${this.#baseUrl}/export/excel`, {
-      params: { startDate, endDate },
+      params: { startDate, endDate, reportType },
       responseType: 'blob'
     });
   }

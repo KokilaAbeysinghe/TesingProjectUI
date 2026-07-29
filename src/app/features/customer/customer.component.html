@@ -21,6 +21,14 @@
       </div>
 
       <div class="form-group">
+        <label for="lastName">Last Name</label>
+        <input id="lastName" type="text" formControlName="lastName" placeholder="Customer last name" />
+        @if (form.get('lastName')?.invalid && form.get('lastName')?.touched) {
+          <span class="field-error">Last Name is required and must be under 100 characters.</span>
+        }
+      </div>
+
+      <div class="form-group">
         <label for="phone">Phone</label>
         <input id="phone" type="text" formControlName="phone" placeholder="e.g. 0771234567 or +94771234567" />
         @if (form.get('phone')?.hasError('required') && form.get('phone')?.touched) {
@@ -51,7 +59,8 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>Name</th>
+          <th>First Name</th>
+          <th>Last Name</th>
           <th>Phone</th>
           <th class="actions-column">Actions</th>
         </tr>
@@ -60,6 +69,7 @@
         @for (customer of customers(); track customer.id) {
           <tr>
             <td>{{ customer.name }}</td>
+            <td>{{ customer.lastName }}</td>
             <td>{{ customer.phone }}</td>
             <td class="actions-column">
               <button type="button" class="btn-link" (click)="openEditForm(customer)">Edit</button>

@@ -175,6 +175,10 @@
     color: $color-text-muted;
     padding: 0.75rem;
     border-bottom: 1px solid $color-border;
+
+    &.actions-column {
+      text-align: right;
+    }
   }
 
   td {
