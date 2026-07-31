@@ -1,14 +1,26 @@
 <app-page-header title="Suppliers" subtitle="Manage hardware suppliers for restocking" />
-
 @if (errorMessage()) {
   <div class="alert alert-error">{{ errorMessage() }}</div>
 }
 
 <div class="toolbar">
+  <div class="search-group">
+    <label for="supplierSearch">Search</label>
+    <input
+      id="suplierSearch"
+      type="text"
+      [value]="supplierSearch()"
+      (input)="updatesupplierSearch($any($event.target).value)"
+      placeholder="Search by name"
+    />
+  </div>
+
+
   @if (canManageSupplier) {
     <button type="button" class="btn btn-primary" (click)="openAddForm()">+ Add Supplier</button>
   }
 </div>
+
 
 @if (showForm()) {
   <div class="form-panel">
@@ -69,7 +81,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (supplier of suppliers(); track supplier.id) {
+        @for (supplier of filteredsuppliers(); track supplier.id) {
           <tr>
             <td>{{ supplier.name }}</td>
             <td>{{ supplier.phone }}</td>

@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { PagedResult } from '../models/paged-result.model';
 import { CreateSaleRequest, Sale, UpdateSaleRequest } from '../models/sale.model';
 
 @Injectable({ providedIn: 'root' })
@@ -12,6 +13,14 @@ export class SaleService {
 
   getAll(): Observable<Sale[]> {
     return this.#http.get<Sale[]>(this.#baseUrl);
+  }
+
+  getPaged(pageNumber: number, pageSize: number): Observable<PagedResult<Sale>> {
+    const params = new HttpParams()
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
+
+    return this.#http.get<PagedResult<Sale>>(`${this.#baseUrl}/paged`, { params });
   }
 
   getById(id: number): Observable<Sale> {

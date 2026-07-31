@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
@@ -28,6 +28,20 @@ export class SupplierComponent implements OnDestroy {
   readonly errorMessage = signal('');
   readonly showForm = signal(false);
   readonly editingSupplierId = signal<number | null>(null);
+  readonly supplierSearch = signal('');
+  
+    readonly filteredsuppliers = computed(() => {
+      const search = this.supplierSearch().trim().toLowerCase();
+      const suppliers = this.suppliers();
+    
+      if (!search) {
+        return suppliers;
+      }
+  
+      return suppliers.filter(supplier =>
+  supplier.name.toLowerCase().includes(search)
+);
+    });
 
   form = this.#formBuilder.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -146,5 +160,8 @@ export class SupplierComponent implements OnDestroy {
     }
 
     return error.error?.Message ?? error.error?.message ?? defaultMessage;
+  }
+  updatesupplierSearch(value: string): void {
+    this.supplierSearch.set(value);
   }
 }

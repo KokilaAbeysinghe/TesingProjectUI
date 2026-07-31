@@ -58,22 +58,40 @@
 <div class="table-card">
   <div class="table-toolbar">
     <h3>Stock Levels</h3>
-    <div class="form-group search-group">
-      <label for="inventorySearch">Search</label>
-      <input
-        id="inventorySearch"
-        type="text"
-        [value]="productSearch()"
-        (input)="updateProductSearch($any($event.target).value)"
-        placeholder="Search by product or category..."
-      />
+
+    <div class="toolbar-filters">
+      <div class="form-group search-group">
+        <label for="inventorySearch">Search</label>
+        <input
+          id="inventorySearch"
+          type="text"
+          [value]="productSearch()"
+          (input)="updateProductSearch($any($event.target).value)"
+          placeholder="Search by product or category..."
+        />
+      </div>
+
+      <label class="filter-checkbox">
+        <input
+          type="checkbox"
+          [checked]="showLowStockOnly()"
+          (change)="updateShowLowStockOnly($any($event.target).checked)"
+        />
+        <span>Show low stock only (&le; {{ lowStockThreshold }})</span>
+      </label>
     </div>
   </div>
 
   @if (isLoading()) {
     <p class="loading-text">Loading inventory...</p>
-  } @else if (filteredProducts().length === 0) {
-    <p class="empty-text">No products found.</p>
+  } @else if (tableProducts().length === 0) {
+    <p class="empty-text">
+      @if (showLowStockOnly()) {
+        No low stock products found.
+      } @else {
+        No products found.
+      }
+    </p>
   } @else {
     <table class="data-table">
       <thead>
@@ -87,14 +105,14 @@
         </tr>
       </thead>
       <tbody>
-        @for (product of filteredProducts(); track product.id) {
+        @for (product of tableProducts(); track product.id) {
           <tr>
             <td>{{ product.name }}</td>
             <td>{{ product.categoryName }}</td>
             <td>
               <span
                 class="stock-badge"
-                [class.stock-low]="product.stock > 0 && product.stock <= 10"
+                [class.stock-low]="product.stock > 0 && product.stock <= lowStockThreshold"
                 [class.stock-critical]="product.stock === 0"
               >
                 {{ product.stock }}
@@ -109,5 +127,11 @@
         }
       </tbody>
     </table>
+
+    <app-pagination
+      [currentPage]="currentPage()"
+      [totalPages]="totalPages()"
+      (pageChange)="updateCurrentPage($event)"
+    />
   }
 </div>

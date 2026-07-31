@@ -1,8 +1,8 @@
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription, forkJoin } from 'rxjs';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 
 import { ProductCategory } from '../../core/models/product-category.model';
 import { Product } from '../../core/models/product.model';
@@ -10,11 +10,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProductCategoryService } from '../../core/services/product-category.service';
 import { ProductService } from '../../core/services/product.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-product',
   standalone: true,
-  imports: [DecimalPipe, PageHeaderComponent, ReactiveFormsModule],
+  imports: [DecimalPipe, PageHeaderComponent, PaginationComponent, ReactiveFormsModule],
   templateUrl: './product.component.html',
   styleUrl: './product.component.scss'
 })
@@ -24,24 +25,15 @@ export class ProductComponent implements OnDestroy {
   readonly #formBuilder = inject(FormBuilder);
   readonly #productService = inject(ProductService);
   readonly #subscriptions = new Subscription();
+  readonly #searchChange = new Subject<void>();
+  readonly #pageSize = 10;
 
   readonly products = signal<Product[]>([]);
   readonly categories = signal<ProductCategory[]>([]);
   readonly productSearch = signal('');
-
-  readonly filteredProducts = computed(() => {
-    const search = this.productSearch().trim().toLowerCase();
-    const products = this.products();
-
-    if (!search) {
-      return products;
-    }
-
-    return products.filter(product =>
-      product.name.toLowerCase().includes(search) ||
-      product.categoryName.toLowerCase().includes(search)
-    );
-  });
+  readonly currentPage = signal(1);
+  readonly totalPages = signal(1);
+  readonly count =signal(0);
 
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
@@ -57,7 +49,16 @@ export class ProductComponent implements OnDestroy {
   });
 
   constructor() {
-    this.loadData();
+    this.loadCategories();
+    this.loadProducts();
+    this.loadcount();
+
+    const searchSubscription = this.#searchChange.pipe(debounceTime(300)).subscribe(() => {
+      this.currentPage.set(1);
+      this.loadProducts();
+    });
+
+    this.#subscriptions.add(searchSubscription);
   }
 
   ngOnDestroy(): void {
@@ -76,19 +77,46 @@ export class ProductComponent implements OnDestroy {
 
   updateProductSearch(value: string): void {
     this.productSearch.set(value);
+    this.#searchChange.next();
   }
 
-  loadData(): void {
+  updateCurrentPage(page: number): void {
+    this.currentPage.set(page);
+    this.loadProducts();
+  }
+
+  loadCategories(): void {
+    const subscription = this.#categoryService.getAll().subscribe({
+      next: categories => this.categories.set(categories),
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage.set(this.#getErrorMessage(error, 'Failed to load categories.'));
+      }
+    });
+
+    this.#subscriptions.add(subscription);
+  }
+loadcount(): void {
+    const subscription = this.#productService.count().subscribe({
+      next: count => this.count.set(count),
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage.set(this.#getErrorMessage(error, 'Failed to load product count.'));
+      }
+    });
+
+    this.#subscriptions.add(subscription);
+  }
+
+
+  loadProducts(): void {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    const subscription = forkJoin({
-      products: this.#productService.getAll(),
-      categories: this.#categoryService.getAll()
-    }).subscribe({
-      next: ({ products, categories }) => {
-        this.products.set(products);
-        this.categories.set(categories);
+    const search = this.productSearch().trim() || undefined;
+
+    const subscription = this.#productService.getPaged(this.currentPage(), this.#pageSize, search).subscribe({
+      next: result => {
+        this.products.set(result.items);
+        this.totalPages.set(Math.max(1, result.totalPages));
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -140,6 +168,7 @@ export class ProductComponent implements OnDestroy {
       stock: Number(stock)
     };
     const productId = this.editingProductId();
+    const isNewProduct = !productId;
 
     const save$ = productId
       ? this.#productService.update(productId, request)
@@ -149,7 +178,12 @@ export class ProductComponent implements OnDestroy {
       next: () => {
         this.isSaving.set(false);
         this.cancelForm();
-        this.loadData();
+
+        if (isNewProduct) {
+          this.currentPage.set(1);
+        }
+
+        this.loadProducts();
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage.set(this.#getErrorMessage(error, 'Failed to save product.'));
@@ -166,7 +200,13 @@ export class ProductComponent implements OnDestroy {
     }
 
     const subscription = this.#productService.delete(product.id).subscribe({
-      next: () => this.loadData(),
+      next: () => {
+        if (this.currentPage() > 1 && this.products().length === 1) {
+          this.currentPage.set(this.currentPage() - 1);
+        }
+
+        this.loadProducts();
+      },
       error: (error: HttpErrorResponse) => {
         this.errorMessage.set(this.#getErrorMessage(error, 'Failed to delete product.'));
       }

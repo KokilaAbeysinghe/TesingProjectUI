@@ -1,0 +1,46 @@
+@if (totalPages() > 1) {
+  <nav class="pagination" aria-label="Pagination">
+    <button
+      type="button"
+      class="pagination-button"
+      [disabled]="currentPage() === 1"
+      (click)="goToPreviousPage()"
+    >
+      Previous
+    </button>
+
+    @if (visiblePages()[0] > 1) {
+      <button type="button" class="pagination-page" (click)="selectPage(1)">1</button>
+      @if (visiblePages()[0] > 2) {
+        <span class="pagination-ellipsis">&hellip;</span>
+      }
+    }
+
+    @for (page of visiblePages(); track page) {
+      <button
+        type="button"
+        class="pagination-page"
+        [class.active]="page === currentPage()"
+        (click)="selectPage(page)"
+      >
+        {{ page }}
+      </button>
+    }
+
+    @if (visiblePages()[visiblePages().length - 1] < totalPages()) {
+      @if (visiblePages()[visiblePages().length - 1] < totalPages() - 1) {
+        <span class="pagination-ellipsis">&hellip;</span>
+      }
+      <button type="button" class="pagination-page" (click)="selectPage(totalPages())">{{ totalPages() }}</button>
+    }
+
+    <button
+      type="button"
+      class="pagination-button"
+      [disabled]="currentPage() === totalPages()"
+      (click)="goToNextPage()"
+    >
+      Next
+    </button>
+  </nav>
+}

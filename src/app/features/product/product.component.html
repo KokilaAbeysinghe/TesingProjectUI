@@ -1,4 +1,8 @@
 <app-page-header title="Products" subtitle="Manage your hardware shop inventory" />
+<div class="count">
+<label> Count {{count()}}</label>
+</div>
+
 
 @if (errorMessage()) {
   <div class="alert alert-error">{{ errorMessage() }}</div>
@@ -77,9 +81,9 @@
 <div class="table-card">
   @if (isLoading()) {
     <p class="loading-text">Loading products...</p>
-  } @else if (products().length === 0) {
+  } @else if (products().length === 0 && !productSearch()) {
     <p class="empty-text">No products yet. Add your first product above.</p>
-  } @else if (filteredProducts().length === 0) {
+  } @else if (products().length === 0) {
     <p class="empty-text">No products match your search.</p>
   } @else {
     <table class="data-table">
@@ -93,7 +97,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (product of filteredProducts(); track product.id) {
+        @for (product of products(); track product.id) {
           <tr>
             <td>{{ product.name }}</td>
             <td>{{ product.categoryName }}</td>
@@ -109,5 +113,11 @@
         }
       </tbody>
     </table>
+
+    <app-pagination
+      [currentPage]="currentPage()"
+      [totalPages]="totalPages()"
+      (pageChange)="updateCurrentPage($event)"
+    />
   }
 </div>

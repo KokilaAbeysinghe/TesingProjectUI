@@ -12,6 +12,7 @@ import { CustomerService } from '../../core/services/customer.service';
 import { ProductService } from '../../core/services/product.service';
 import { SaleService } from '../../core/services/sale.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
 interface CartItem {
   productId: number;
@@ -23,7 +24,7 @@ interface CartItem {
 @Component({
   selector: 'app-sale',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, PageHeaderComponent, ReactiveFormsModule],
+  imports: [DatePipe, DecimalPipe, PageHeaderComponent, PaginationComponent, ReactiveFormsModule],
   templateUrl: './sale.component.html',
   styleUrl: './sale.component.scss'
 })
@@ -35,6 +36,7 @@ export class SaleComponent implements OnDestroy {
   readonly #saleService = inject(SaleService);
   readonly #subscriptions = new Subscription();
   readonly #clearPrintingSale = (): void => this.printingSale.set(null);
+  readonly #pageSize = 10;
 
   readonly paymentMethods: PaymentMethod[] = ['Cash', 'Card', 'BankTransfer'];
 
@@ -43,6 +45,7 @@ export class SaleComponent implements OnDestroy {
   readonly sales = signal<Sale[]>([]);
   readonly cartItems = signal<CartItem[]>([]);
   readonly productSearch = signal('');
+  readonly currentPage = signal(1);
 
   readonly filteredProducts = computed(() => {
     const search = this.productSearch().trim().toLowerCase();
@@ -54,6 +57,8 @@ export class SaleComponent implements OnDestroy {
 
     return products.filter(product => product.name.toLowerCase().includes(search));
   });
+
+  readonly totalPages = signal(1);
 
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
@@ -103,20 +108,41 @@ export class SaleComponent implements OnDestroy {
   loadData(): void {
     this.isLoading.set(true);
     this.errorMessage.set('');
+    this.currentPage.set(1);
 
     const subscription = forkJoin({
       customers: this.#customerService.getAll(),
       products: this.#productService.getAll(),
-      sales: this.#saleService.getAll()
+      sales: this.#saleService.getPaged(this.currentPage(), this.#pageSize)
     }).subscribe({
       next: ({ customers, products, sales }) => {
         this.customers.set(customers);
         this.products.set(products);
-        this.sales.set(sales);
+        this.sales.set(sales.items);
+        this.totalPages.set(Math.max(1, sales.totalPages));
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage.set(this.#getErrorMessage(error, 'Failed to load sales data.'));
+        this.isLoading.set(false);
+      }
+    });
+
+    this.#subscriptions.add(subscription);
+  }
+
+  loadSales(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    const subscription = this.#saleService.getPaged(this.currentPage(), this.#pageSize).subscribe({
+      next: result => {
+        this.sales.set(result.items);
+        this.totalPages.set(Math.max(1, result.totalPages));
+        this.isLoading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage.set(this.#getErrorMessage(error, 'Failed to load sales.'));
         this.isLoading.set(false);
       }
     });
@@ -219,6 +245,11 @@ export class SaleComponent implements OnDestroy {
 
   toggleSaleDetails(saleId: number): void {
     this.expandedSaleId.set(this.expandedSaleId() === saleId ? null : saleId);
+  }
+
+  updateCurrentPage(page: number): void {
+    this.currentPage.set(page);
+    this.loadSales();
   }
 
   openEditSale(sale: Sale): void {

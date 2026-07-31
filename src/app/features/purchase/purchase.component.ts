@@ -12,6 +12,7 @@ import { ProductService } from '../../core/services/product.service';
 import { PurchaseService } from '../../core/services/purchase.service';
 import { SupplierService } from '../../core/services/supplier.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
 interface CartItem {
   productId: number;
@@ -23,7 +24,7 @@ interface CartItem {
 @Component({
   selector: 'app-purchase',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, PageHeaderComponent, ReactiveFormsModule],
+  imports: [DatePipe, DecimalPipe, PageHeaderComponent, PaginationComponent, ReactiveFormsModule],
   templateUrl: './purchase.component.html',
   styleUrl: './purchase.component.scss'
 })
@@ -34,11 +35,14 @@ export class PurchaseComponent implements OnDestroy {
   readonly #purchaseService = inject(PurchaseService);
   readonly #subscriptions = new Subscription();
   readonly #supplierService = inject(SupplierService);
+  readonly #pageSize = 10;
 
   readonly suppliers = signal<Supplier[]>([]);
   readonly products = signal<Product[]>([]);
   readonly purchases = signal<Purchase[]>([]);
   readonly cartItems = signal<CartItem[]>([]);
+  readonly currentPage = signal(1);
+  readonly totalPages = signal(1);
 
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
@@ -77,20 +81,41 @@ export class PurchaseComponent implements OnDestroy {
   loadData(): void {
     this.isLoading.set(true);
     this.errorMessage.set('');
+    this.currentPage.set(1);
 
     const subscription = forkJoin({
       suppliers: this.#supplierService.getAll(),
       products: this.#productService.getAll(),
-      purchases: this.#purchaseService.getAll()
+      purchases: this.#purchaseService.getPaged(this.currentPage(), this.#pageSize)
     }).subscribe({
       next: ({ suppliers, products, purchases }) => {
         this.suppliers.set(suppliers);
         this.products.set(products);
-        this.purchases.set(purchases);
+        this.purchases.set(purchases.items);
+        this.totalPages.set(Math.max(1, purchases.totalPages));
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage.set(this.#getErrorMessage(error, 'Failed to load purchase data.'));
+        this.isLoading.set(false);
+      }
+    });
+
+    this.#subscriptions.add(subscription);
+  }
+
+  loadPurchases(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    const subscription = this.#purchaseService.getPaged(this.currentPage(), this.#pageSize).subscribe({
+      next: result => {
+        this.purchases.set(result.items);
+        this.totalPages.set(Math.max(1, result.totalPages));
+        this.isLoading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage.set(this.#getErrorMessage(error, 'Failed to load purchases.'));
         this.isLoading.set(false);
       }
     });
@@ -178,6 +203,11 @@ export class PurchaseComponent implements OnDestroy {
 
   togglePurchaseDetails(purchaseId: number): void {
     this.expandedPurchaseId.set(this.expandedPurchaseId() === purchaseId ? null : purchaseId);
+  }
+
+  updateCurrentPage(page: number): void {
+    this.currentPage.set(page);
+    this.loadPurchases();
   }
 
   #getErrorMessage(error: HttpErrorResponse, defaultMessage: string): string {

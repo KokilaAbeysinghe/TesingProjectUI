@@ -20,3 +20,11 @@ export interface PaymentMethodSummary {
   salesCount: number;
   totalAmount: number;
 }
+
+export interface TopCustomers {
+  customerId: number;
+  customerName: string;
+  quantityBuy: number;
+  customerAmount: number;
+}
+

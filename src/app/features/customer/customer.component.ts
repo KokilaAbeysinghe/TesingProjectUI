@@ -7,11 +7,12 @@ import { Customer } from '../../core/models/customer.model';
 import { CustomerService } from '../../core/services/customer.service';
 import { sriLankanPhoneValidator } from '../../core/validators/sri-lankan-phone.validator';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-customer',
   standalone: true,
-  imports: [PageHeaderComponent, ReactiveFormsModule],
+  imports: [PageHeaderComponent, PaginationComponent, ReactiveFormsModule],
   templateUrl: './customer.component.html',
   styleUrl: './customer.component.scss'
 })
@@ -19,8 +20,12 @@ export class CustomerComponent implements OnDestroy {
   readonly #customerService = inject(CustomerService);
   readonly #formBuilder = inject(FormBuilder);
   readonly #subscriptions = new Subscription();
+  readonly #pageSize = 10;
 
   readonly customers = signal<Customer[]>([]);
+  readonly currentPage = signal(1);
+  readonly totalPages = signal(1);
+
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly errorMessage = signal('');
@@ -45,12 +50,10 @@ export class CustomerComponent implements OnDestroy {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    const subscription = this.#customerService.getAll().subscribe({
-      next: receivedCustomers => {
-        this.customers.set(receivedCustomers);
-
-        console.log("AAAA" ,this.customers())
-
+    const subscription = this.#customerService.getPaged(this.currentPage(), this.#pageSize).subscribe({
+      next: result => {
+        this.customers.set(result.items);
+        this.totalPages.set(Math.max(1, result.totalPages));
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -79,6 +82,11 @@ export class CustomerComponent implements OnDestroy {
     this.editingCustomerId.set(null);
   }
 
+  updateCurrentPage(page: number): void {
+    this.currentPage.set(page);
+    this.loadCustomers();
+  }
+
   submit(): void {
     console.log(this.form.invalid);
     if (this.form.invalid) {
@@ -93,22 +101,24 @@ export class CustomerComponent implements OnDestroy {
     const { name,lastName, phone } = this.form.getRawValue();
     const request = { name: name!, lastName: lastName!,phone: phone!.replace(/[\s-]/g, '') };
     const customerId = this.editingCustomerId();
+    const isNewCustomer = !customerId;
 
+    const save$ = customerId
+      ? this.#customerService.update(customerId, request)
+      : this.#customerService.create(request);
 
-    const save$ = customerId 
-    ? this.#customerService.update(customerId, request)  
-    : this.#customerService.create(request);
-      
-     
     const subscription = save$.subscribe({
-      next: (response) => {
-        console.log("success",response);
+      next: () => {
         this.isSaving.set(false);
         this.cancelForm();
+
+        if (isNewCustomer) {
+          this.currentPage.set(1);
+        }
+
         this.loadCustomers();
       },
       error: (error: HttpErrorResponse) => {
-        console.log("error" , error);
         this.errorMessage.set(this.#getErrorMessage(error, 'Failed to save customer.'));
         this.isSaving.set(false);
       }
@@ -123,7 +133,13 @@ export class CustomerComponent implements OnDestroy {
     }
 
     const subscription = this.#customerService.delete(customer.id).subscribe({
-      next: () => this.loadCustomers(),
+      next: () => {
+        if (this.currentPage() > 1 && this.customers().length === 1) {
+          this.currentPage.set(this.currentPage() - 1);
+        }
+
+        this.loadCustomers();
+      },
       error: (error: HttpErrorResponse) => {
         this.errorMessage.set(this.#getErrorMessage(error, 'Failed to delete customer.'));
       }
