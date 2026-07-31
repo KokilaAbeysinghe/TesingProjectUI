@@ -69,28 +69,37 @@
 </div>
 
 @if (activeReportTab() === 'summary') {
-  @if (isLoading()) {
-    <p class="loading-text">Loading report...</p>
-  } @else if (errorMessage()) {
-    <p class="empty-text">Report could not be loaded. Check the error above and try again.</p>
-  } @else if (summary()) {
-    <div class="summary-cards">
-      <div class="summary-card">
-        <span class="summary-label">Total Revenue</span>
-        <span class="summary-value">LKR {{ summary()!.totalRevenue | number: '1.2-2' }}</span>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Total Sales</span>
-        <span class="summary-value">{{ summary()!.totalSalesCount }}</span>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">Items Sold</span>
-        <span class="summary-value">{{ summary()!.totalItemsSold }}</span>
-      </div>
-    </div>
-  } @else {
-    <p class="empty-text">No sales found for the selected date range.</p>
-  }
+  <div class="table-card">
+    <h3>Monthly Sales Summary</h3>
+    @if (isLoading()) {
+      <p class="loading-text">Loading report...</p>
+    } @else if (errorMessage()) {
+      <p class="empty-text">Report could not be loaded. Check the error above and try again.</p>
+    } @else if (monthlySalesSummary().length === 0) {
+      <p class="empty-text">No sales found for the selected date range.</p>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Transactions</th>
+            <th>Total Revenue</th>
+            <th>Average Sale Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (monthSummary of monthlySalesSummary(); track monthSummary.month) {
+            <tr>
+              <td>{{ monthSummary.month }}</td>
+              <td>{{ monthSummary.transactionCount }}</td>
+              <td>LKR {{ monthSummary.totalRevenue | number: '1.2-2' }}</td>
+              <td>LKR {{ monthSummary.averageSaleValue | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
 }
 
 @if (activeReportTab() === 'topProducts') {
@@ -107,7 +116,8 @@
         <thead>
           <tr>
             <th>Product</th>
-            <th>Quantity Sold</th>
+            <th>Category</th>
+            <th>Qty Sold</th>
             <th>Revenue</th>
           </tr>
         </thead>
@@ -115,6 +125,7 @@
           @for (product of topProducts(); track product.productId) {
             <tr>
               <td>{{ product.productName }}</td>
+              <td>{{ product.categoryName }}</td>
               <td>{{ product.quantitySold }}</td>
               <td>LKR {{ product.revenue | number: '1.2-2' }}</td>
             </tr>
@@ -181,6 +192,44 @@
               <td>{{ dailySummary.date | date: 'yyyy-MM-dd' }}</td>
               <td>{{ dailySummary.salesCount }}</td>
               <td>LKR {{ dailySummary.totalRevenue | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}
+
+@if (activeReportTab() === 'lowStock') {
+  <div class="table-card">
+    <h3>Low Stock Products</h3>
+    @if (isLoading()) {
+      <p class="loading-text">Loading report...</p>
+    } @else if (errorMessage()) {
+      <p class="empty-text">Report could not be loaded. Check the error above and try again.</p>
+    } @else if (lowStockProducts().length === 0) {
+      <p class="empty-text">No low stock products found.</p>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Current Stock</th>
+            <th>Reorder Level</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of lowStockProducts(); track product.productName) {
+            <tr>
+              <td>{{ product.productName }}</td>
+              <td>{{ product.currentStock }}</td>
+              <td>{{ product.reorderLevel }}</td>
+              <td>
+                <span class="status-badge" [class.status-out]="product.status === 'Out of Stock'">
+                  {{ product.status }}
+                </span>
+              </td>
             </tr>
           }
         </tbody>

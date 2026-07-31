@@ -5,11 +5,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, forkJoin } from 'rxjs';
 
 import { DatePreset, DatePresetKey } from '../../core/models/date-preset.model';
-import { DailySalesSummary, PaymentMethodSummary, SalesSummary, TopProduct } from '../../core/models/report.model';
+import { DailySalesSummary, LowStockProduct, MonthlySalesSummary, PaymentMethodSummary, TopProduct } from '../../core/models/report.model';
 import { ReportService } from '../../core/services/report.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
-type ReportTabKey = 'summary' | 'topProducts' | 'paymentMethods' | 'dailySales';
+type ReportTabKey = 'summary' | 'topProducts' | 'paymentMethods' | 'dailySales' | 'lowStock';
 
 @Component({
   selector: 'app-report',
@@ -36,13 +36,15 @@ export class ReportComponent implements OnDestroy {
     { key: 'summary' as ReportTabKey, label: 'Summary' },
     { key: 'topProducts' as ReportTabKey, label: 'Top Products' },
     { key: 'paymentMethods' as ReportTabKey, label: 'Payment Methods' },
-    { key: 'dailySales' as ReportTabKey, label: 'Daily Sales' }
+    { key: 'dailySales' as ReportTabKey, label: 'Daily Sales' },
+    { key: 'lowStock' as ReportTabKey, label: 'Low Stock' }
   ];
 
-  readonly summary = signal<SalesSummary | null>(null);
+  readonly monthlySalesSummary = signal<MonthlySalesSummary[]>([]);
   readonly topProducts = signal<TopProduct[]>([]);
   readonly paymentMethodSummary = signal<PaymentMethodSummary[]>([]);
   readonly dailySalesSummary = signal<DailySalesSummary[]>([]);
+  readonly lowStockProducts = signal<LowStockProduct[]>([]);
 
   readonly isLoading = signal(false);
   readonly isDownloading = signal(false);
@@ -94,31 +96,35 @@ export class ReportComponent implements OnDestroy {
 
     this.isLoading.set(true);
     this.errorMessage.set('');
-    this.summary.set(null);
+    this.monthlySalesSummary.set([]);
     this.topProducts.set([]);
     this.paymentMethodSummary.set([]);
     this.dailySalesSummary.set([]);
+    this.lowStockProducts.set([]);
 
     const subscription = forkJoin({
-      summary: this.#reportService.getSalesSummary(startDate!, endDate!),
+      monthlySalesSummary: this.#reportService.getMonthlySalesSummary(startDate!, endDate!),
       topProducts: this.#reportService.getTopProducts(startDate!, endDate!, 5),
       paymentMethodSummary: this.#reportService.getPaymentMethodSummary(startDate!, endDate!),
-      dailySalesSummary: this.#reportService.getDailySalesSummary(startDate!, endDate!)
+      dailySalesSummary: this.#reportService.getDailySalesSummary(startDate!, endDate!),
+      lowStockProducts: this.#reportService.getLowStockProducts()
     }).subscribe({
-      next: ({ summary, topProducts, paymentMethodSummary, dailySalesSummary }) => {
-        this.summary.set(summary);
+      next: ({ monthlySalesSummary, topProducts, paymentMethodSummary, dailySalesSummary, lowStockProducts }) => {
+        this.monthlySalesSummary.set(monthlySalesSummary);
         this.topProducts.set(topProducts);
         this.paymentMethodSummary.set(paymentMethodSummary);
         this.dailySalesSummary.set(dailySalesSummary);
+        this.lowStockProducts.set(lowStockProducts);
         this.activeReportTab.set('summary');
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage.set(this.#getErrorMessage(error, 'Failed to generate report.'));
-        this.summary.set(null);
+        this.monthlySalesSummary.set([]);
         this.topProducts.set([]);
         this.paymentMethodSummary.set([]);
         this.dailySalesSummary.set([]);
+        this.lowStockProducts.set([]);
         this.isLoading.set(false);
       }
     });
@@ -184,6 +190,9 @@ export class ReportComponent implements OnDestroy {
 
       case 'dailySales':
         return 'daily-sales';
+
+      case 'lowStock':
+        return 'low-stock';
 
       case 'summary':
         return 'summary';

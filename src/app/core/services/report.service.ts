@@ -3,15 +3,17 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { DailySalesSummary, PaymentMethodSummary, SalesSummary, TopProduct } from '../models/report.model';
+import { DailySalesSummary, LowStockProduct, MonthlySalesSummary, PaymentMethodSummary, TopProduct } from '../models/report.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReportService {
   readonly #http = inject(HttpClient);
   readonly #baseUrl = `${environment.apiUrl}/api/Reports`;
 
-  getSalesSummary(startDate: string, endDate: string): Observable<SalesSummary> {
-    return this.#http.get<SalesSummary>(`${this.#baseUrl}/summary`, { params: { startDate, endDate } });
+  getMonthlySalesSummary(startDate: string, endDate: string): Observable<MonthlySalesSummary[]> {
+    return this.#http.get<MonthlySalesSummary[]>(`${this.#baseUrl}/monthly-sales`, {
+      params: { startDate, endDate }
+    });
   }
 
   getTopProducts(startDate: string, endDate: string, count: number): Observable<TopProduct[]> {
@@ -30,6 +32,10 @@ export class ReportService {
     return this.#http.get<DailySalesSummary[]>(`${this.#baseUrl}/daily-sales`, {
       params: { startDate, endDate }
     });
+  }
+
+  getLowStockProducts(): Observable<LowStockProduct[]> {
+    return this.#http.get<LowStockProduct[]>(`${this.#baseUrl}/low-stock`);
   }
 
   exportToExcel(startDate: string, endDate: string, reportType: string): Observable<Blob> {
