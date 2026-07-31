@@ -14,6 +14,9 @@ export interface Sale {
   saleDate: string;
   customerId: number;
   customerName: string;
+  subtotalAmount: number;
+  discountPercentage: number;
+  discountAmount: number;
   totalAmount: number;
   paymentMethod: PaymentMethod;
   status: SaleStatus;
@@ -28,10 +31,12 @@ export interface CreateSaleItemRequest {
 export interface CreateSaleRequest {
   customerId: number;
   saleItems: CreateSaleItemRequest[];
+  discountPercentage: number;
   paymentMethod: PaymentMethod;
 }
 
 export interface UpdateSaleRequest {
   customerId: number;
+  discountPercentage: number;
   paymentMethod: PaymentMethod;
 }

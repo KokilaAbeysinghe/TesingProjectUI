@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Subscription, forkJoin } from 'rxjs';
 
 import { Customer } from '../../core/models/customer.model';
@@ -37,6 +37,11 @@ export class SaleComponent implements OnDestroy {
   readonly #subscriptions = new Subscription();
   readonly #clearPrintingSale = (): void => this.printingSale.set(null);
   readonly #pageSize = 5;
+  readonly #wholeNumberValidator = (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+
+    return value === null || value === undefined || Number.isInteger(Number(value)) ? null : { wholeNumber: true };
+  };
 
   readonly paymentMethods: PaymentMethod[] = ['Cash', 'Card', 'BankTransfer'];
 
@@ -72,6 +77,7 @@ export class SaleComponent implements OnDestroy {
 
   saleForm = this.#formBuilder.group({
     customerId: [0, [Validators.required, Validators.min(1)]],
+    discountPercentage: [0, [Validators.required, Validators.min(0), Validators.max(100), this.#wholeNumberValidator]],
     paymentMethod: ['Cash' as PaymentMethod, [Validators.required]]
   });
 
@@ -82,6 +88,7 @@ export class SaleComponent implements OnDestroy {
 
   editForm = this.#formBuilder.group({
     customerId: [0, [Validators.required, Validators.min(1)]],
+    discountPercentage: [0, [Validators.required, Validators.min(0), Validators.max(100), this.#wholeNumberValidator]],
     paymentMethod: ['Cash' as PaymentMethod, [Validators.required]]
   });
 
@@ -97,6 +104,36 @@ export class SaleComponent implements OnDestroy {
 
   get cartTotal(): number {
     return this.cartItems().reduce((total, item) => total + item.unitPrice * item.quantity, 0);
+  }
+
+  get discountPercentage(): number {
+    return this.saleForm.getRawValue().discountPercentage ?? 0;
+  }
+
+  get discountAmount(): number {
+    return Math.round(this.cartTotal * this.discountPercentage) / 100;
+  }
+
+  get netTotal(): number {
+    return Math.max(this.cartTotal - this.discountAmount, 0);
+  }
+
+  get editSubtotal(): number {
+    const sale = this.editingSale();
+
+    return sale ? sale.saleItems.reduce((total, item) => total + item.unitPrice * item.quantity, 0) : 0;
+  }
+
+  get editDiscountPercentage(): number {
+    return this.editForm.getRawValue().discountPercentage ?? 0;
+  }
+
+  get editDiscountAmount(): number {
+    return Math.round(this.editSubtotal * this.editDiscountPercentage) / 100;
+  }
+
+  get editNetTotal(): number {
+    return Math.max(this.editSubtotal - this.editDiscountAmount, 0);
   }
 
   get canManageSale(): boolean {
@@ -220,9 +257,10 @@ export class SaleComponent implements OnDestroy {
     this.isSaving.set(true);
     this.errorMessage.set('');
 
-    const { customerId, paymentMethod } = this.saleForm.getRawValue();
+    const { customerId, discountPercentage, paymentMethod } = this.saleForm.getRawValue();
     const request = {
       customerId: customerId!,
+      discountPercentage: discountPercentage!,
       paymentMethod: paymentMethod!,
       saleItems: this.cartItems().map(item => ({ productId: item.productId, quantity: item.quantity }))
     };
@@ -231,7 +269,7 @@ export class SaleComponent implements OnDestroy {
       next: () => {
         this.isSaving.set(false);
         this.cartItems.set([]);
-        this.saleForm.reset({ customerId: 0, paymentMethod: 'Cash' });
+        this.saleForm.reset({ customerId: 0, discountPercentage: 0, paymentMethod: 'Cash' });
         this.loadData();
       },
       error: (error: HttpErrorResponse) => {
@@ -255,7 +293,11 @@ export class SaleComponent implements OnDestroy {
   openEditSale(sale: Sale): void {
     this.editErrorMessage.set('');
     this.editingSale.set(sale);
-    this.editForm.reset({ customerId: sale.customerId, paymentMethod: sale.paymentMethod });
+    this.editForm.reset({
+      customerId: sale.customerId,
+      discountPercentage: sale.discountPercentage,
+      paymentMethod: sale.paymentMethod
+    });
   }
 
   cancelEditSale(): void {
@@ -274,8 +316,8 @@ export class SaleComponent implements OnDestroy {
     this.isSaving.set(true);
     this.editErrorMessage.set('');
 
-    const { customerId, paymentMethod } = this.editForm.getRawValue();
-    const request = { customerId: customerId!, paymentMethod: paymentMethod! };
+    const { customerId, discountPercentage, paymentMethod } = this.editForm.getRawValue();
+    const request = { customerId: customerId!, discountPercentage: discountPercentage!, paymentMethod: paymentMethod! };
 
     const subscription = this.#saleService.update(sale.id, request).subscribe({
       next: () => {

@@ -95,6 +95,21 @@
   width: 100px;
 }
 
+.percentage-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  input {
+    width: 90px;
+  }
+}
+
+.percentage-mark {
+  color: $color-text-muted;
+  font-weight: 600;
+}
+
 .add-item-button {
   height: 2.6rem;
 }
@@ -206,6 +221,13 @@
   padding: 0.75rem 0.75rem 0;
 }
 
+.cart-total-line {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: $color-text-muted;
+  padding-top: 0.35rem;
+}
+
 .details-row td {
   background: $color-background-alt;
   padding: 1rem;
@@ -278,6 +300,13 @@
 .edit-sale-actions {
   display: flex;
   gap: 0.75rem;
+}
+
+.edit-sale-total {
+  color: $color-text-muted;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0;
 }
 
 .receipt-print {

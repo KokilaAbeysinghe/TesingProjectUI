@@ -30,6 +30,17 @@
           }
         </select>
       </div>
+
+      <div class="form-group">
+        <label for="discountPercentage">Discount (%)</label>
+        <div class="percentage-input">
+          <input id="discountPercentage" type="number" min="0" max="100" step="1" formControlName="discountPercentage" />
+          <span class="percentage-mark">%</span>
+        </div>
+        @if (saleForm.get('discountPercentage')?.invalid && saleForm.get('discountPercentage')?.touched) {
+          <span class="field-error">Discount must be a whole number between 0 and 100.</span>
+        }
+      </div>
     </div>
   </form>
 
@@ -97,9 +108,17 @@
       </tbody>
     </table>
 
+    <div class="cart-total cart-total-line">
+      <span>Subtotal</span>
+      <span>LKR {{ cartTotal | number: '1.2-2' }}</span>
+    </div>
+    <div class="cart-total cart-total-line">
+      <span>Discount ({{ discountPercentage }}%)</span>
+      <span>LKR {{ discountAmount | number: '1.2-2' }}</span>
+    </div>
     <div class="cart-total">
       <span>Total</span>
-      <span>LKR {{ cartTotal | number: '1.2-2' }}</span>
+      <span>LKR {{ netTotal | number: '1.2-2' }}</span>
     </div>
   } @else {
     <p class="empty-text">No items added yet.</p>
@@ -125,6 +144,7 @@
           <th>Date</th>
           <th>Customer</th>
           <th>Payment</th>
+          <th>Discount</th>
           <th>Total</th>
           <th>Status</th>
           <th class="actions-column">Actions</th>
@@ -134,7 +154,7 @@
         @for (sale of sales(); track sale.id) {
           @if (editingSale()?.id === sale.id) {
             <tr class="edit-row">
-              <td colspan="6">
+              <td colspan="7">
                 <form [formGroup]="editForm" (ngSubmit)="submitEditSale()" class="edit-sale-form">
                   <div class="form-group">
                     <label for="editCustomerId">Customer</label>
@@ -155,11 +175,23 @@
                     </select>
                   </div>
 
+                  <div class="form-group">
+                    <label for="editDiscountPercentage">Discount (%)</label>
+                    <div class="percentage-input">
+                      <input id="editDiscountPercentage" type="number" min="0" max="100" step="1" formControlName="discountPercentage" />
+                      <span class="percentage-mark">%</span>
+                    </div>
+                    @if (editForm.get('discountPercentage')?.invalid && editForm.get('discountPercentage')?.touched) {
+                      <span class="field-error">Discount must be a whole number between 0 and 100.</span>
+                    }
+                  </div>
+
                   <div class="edit-sale-actions">
                     <button type="submit" class="btn btn-primary" [disabled]="isSaving()">Save</button>
                     <button type="button" class="btn btn-secondary" (click)="cancelEditSale()">Cancel</button>
                   </div>
                 </form>
+                <p class="edit-sale-total">Subtotal: LKR {{ editSubtotal | number: '1.2-2' }} — New Total: LKR {{ editNetTotal | number: '1.2-2' }}</p>
                 @if (editErrorMessage()) {
                   <span class="field-error">{{ editErrorMessage() }}</span>
                 }
@@ -170,6 +202,7 @@
               <td>{{ sale.saleDate | date: 'MMM d, y, h:mm a' }}</td>
               <td>{{ sale.customerName }}</td>
               <td>{{ sale.paymentMethod }}</td>
+              <td>{{ sale.discountPercentage }}%</td>
               <td>{{ sale.totalAmount | number: '1.2-2' }}</td>
               <td>
                 <span class="status-badge" [class.status-voided]="sale.status === 'Voided'">{{ sale.status }}</span>
@@ -188,7 +221,7 @@
           }
           @if (expandedSaleId() === sale.id) {
             <tr class="details-row">
-              <td colspan="6">
+              <td colspan="7">
                 <table class="data-table nested-table">
                   <thead>
                     <tr>
@@ -209,6 +242,19 @@
                     }
                   </tbody>
                 </table>
+
+                <div class="cart-total cart-total-line">
+                  <span>Subtotal</span>
+                  <span>LKR {{ sale.subtotalAmount | number: '1.2-2' }}</span>
+                </div>
+                <div class="cart-total cart-total-line">
+                  <span>Discount ({{ sale.discountPercentage }}%)</span>
+                  <span>LKR {{ sale.discountAmount | number: '1.2-2' }}</span>
+                </div>
+                <div class="cart-total">
+                  <span>Total</span>
+                  <span>LKR {{ sale.totalAmount | number: '1.2-2' }}</span>
+                </div>
               </td>
             </tr>
           }
@@ -257,6 +303,10 @@
       </tbody>
     </table>
     <hr />
+    <p class="receipt-line">Subtotal: LKR {{ printingSale()!.subtotalAmount | number: '1.2-2' }}</p>
+    @if (printingSale()!.discountPercentage > 0) {
+      <p class="receipt-line">Discount ({{ printingSale()!.discountPercentage }}%): LKR {{ printingSale()!.discountAmount | number: '1.2-2' }}</p>
+    }
     <p class="receipt-total">Total: LKR {{ printingSale()!.totalAmount | number: '1.2-2' }}</p>
     <p class="receipt-line receipt-thanks">Thank you for your purchase!</p>
   </div>
