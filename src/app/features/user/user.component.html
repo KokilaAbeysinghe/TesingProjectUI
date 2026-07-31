@@ -106,5 +106,11 @@
         }
       </tbody>
     </table>
+
+    <app-pagination
+      [currentPage]="currentPage()"
+      [totalPages]="totalPages()"
+      (pageChange)="updateCurrentPage($event)"
+    />
   }
 </div>

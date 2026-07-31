@@ -81,7 +81,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (supplier of filteredsuppliers(); track supplier.id) {
+        @for (supplier of suppliers(); track supplier.id) {
           <tr>
             <td>{{ supplier.name }}</td>
             <td>{{ supplier.phone }}</td>
@@ -96,5 +96,11 @@
         }
       </tbody>
     </table>
+
+    <app-pagination
+      [currentPage]="currentPage()"
+      [totalPages]="totalPages()"
+      (pageChange)="updateCurrentPage($event)"
+    />
   }
 </div>

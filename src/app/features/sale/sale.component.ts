@@ -36,7 +36,7 @@ export class SaleComponent implements OnDestroy {
   readonly #saleService = inject(SaleService);
   readonly #subscriptions = new Subscription();
   readonly #clearPrintingSale = (): void => this.printingSale.set(null);
-  readonly #pageSize = 10;
+  readonly #pageSize = 5;
 
   readonly paymentMethods: PaymentMethod[] = ['Cash', 'Card', 'BankTransfer'];
 

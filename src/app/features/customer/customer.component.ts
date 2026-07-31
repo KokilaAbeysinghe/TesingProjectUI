@@ -20,7 +20,7 @@ export class CustomerComponent implements OnDestroy {
   readonly #customerService = inject(CustomerService);
   readonly #formBuilder = inject(FormBuilder);
   readonly #subscriptions = new Subscription();
-  readonly #pageSize = 10;
+  readonly #pageSize = 5;
 
   readonly customers = signal<Customer[]>([]);
   readonly currentPage = signal(1);

@@ -156,3 +156,35 @@
     }
   </div>
 }
+
+@if (activeReportTab() === 'dailySales') {
+  <div class="table-card">
+    <h3>Daily Sales Summary</h3>
+    @if (isLoading()) {
+      <p class="loading-text">Loading report...</p>
+    } @else if (errorMessage()) {
+      <p class="empty-text">Report could not be loaded. Check the error above and try again.</p>
+    } @else if (dailySalesSummary().length === 0) {
+      <p class="empty-text">No sales found for the selected date range.</p>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>No of Sales</th>
+            <th>Total Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (dailySummary of dailySalesSummary(); track dailySummary.date) {
+            <tr>
+              <td>{{ dailySummary.date | date: 'yyyy-MM-dd' }}</td>
+              <td>{{ dailySummary.salesCount }}</td>
+              <td>LKR {{ dailySummary.totalRevenue | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}

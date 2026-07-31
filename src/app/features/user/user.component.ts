@@ -9,11 +9,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { sriLankanPhoneValidator } from '../../core/validators/sri-lankan-phone.validator';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-user',
   standalone: true,
-  imports: [PageHeaderComponent, ReactiveFormsModule],
+  imports: [PageHeaderComponent, PaginationComponent, ReactiveFormsModule],
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss'
 })
@@ -24,9 +25,13 @@ export class UserComponent implements OnDestroy {
   readonly #subscriptions = new Subscription();
   readonly #userService = inject(UserService);
 
+  readonly #pageSize = 5;
+
   readonly roles: UserRole[] = ['Cashier', 'Manager', 'Admin'];
 
   readonly users = signal<User[]>([]);
+  readonly currentPage = signal(1);
+  readonly totalPages = signal(1);
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly errorMessage = signal('');
@@ -59,9 +64,10 @@ export class UserComponent implements OnDestroy {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    const subscription = this.#userService.getAll().subscribe({
-      next: users => {
-        this.users.set(users);
+    const subscription = this.#userService.getPaged(this.currentPage(), this.#pageSize).subscribe({
+      next: result => {
+        this.users.set(result.items);
+        this.totalPages.set(Math.max(1, result.totalPages));
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -71,6 +77,11 @@ export class UserComponent implements OnDestroy {
     });
 
     this.#subscriptions.add(subscription);
+  }
+
+  updateCurrentPage(page: number): void {
+    this.currentPage.set(page);
+    this.loadUsers();
   }
 
   openAddForm(): void {

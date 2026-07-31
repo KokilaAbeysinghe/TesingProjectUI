@@ -35,7 +35,7 @@ export class PurchaseComponent implements OnDestroy {
   readonly #purchaseService = inject(PurchaseService);
   readonly #subscriptions = new Subscription();
   readonly #supplierService = inject(SupplierService);
-  readonly #pageSize = 10;
+  readonly #pageSize = 5
 
   readonly suppliers = signal<Supplier[]>([]);
   readonly products = signal<Product[]>([]);

@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { PagedResult } from '../models/paged-result.model';
 import { CreateUserRequest, UpdateUserRequest, User } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
@@ -12,6 +13,14 @@ export class UserService {
 
   getAll(): Observable<User[]> {
     return this.#http.get<User[]>(this.#baseUrl);
+  }
+
+  getPaged(pageNumber: number, pageSize: number): Observable<PagedResult<User>> {
+    const params = new HttpParams()
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
+
+    return this.#http.get<PagedResult<User>>(`${this.#baseUrl}/paged`, { params });
   }
 
   getById(id: number): Observable<User> {

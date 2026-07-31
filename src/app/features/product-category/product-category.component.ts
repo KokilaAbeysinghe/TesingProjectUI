@@ -6,11 +6,12 @@ import { Subscription } from 'rxjs';
 import { ProductCategory } from '../../core/models/product-category.model';
 import { ProductCategoryService } from '../../core/services/product-category.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-product-category',
   standalone: true,
-  imports: [PageHeaderComponent, ReactiveFormsModule],
+  imports: [PageHeaderComponent, PaginationComponent, ReactiveFormsModule],
   templateUrl: './product-category.component.html',
   styleUrl: './product-category.component.scss'
 })
@@ -19,7 +20,11 @@ export class ProductCategoryComponent implements OnDestroy {
   readonly #formBuilder = inject(FormBuilder);
   readonly #subscriptions = new Subscription();
 
+  readonly #pageSize = 5;
+
   readonly categories = signal<ProductCategory[]>([]);
+  readonly currentPage = signal(1);
+  readonly totalPages = signal(1);
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly errorMessage = signal('');
@@ -43,9 +48,10 @@ export class ProductCategoryComponent implements OnDestroy {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    const subscription = this.#categoryService.getAll().subscribe({
-      next: categories => {
-        this.categories.set(categories);
+    const subscription = this.#categoryService.getPaged(this.currentPage(), this.#pageSize).subscribe({
+      next: result => {
+        this.categories.set(result.items);
+        this.totalPages.set(Math.max(1, result.totalPages));
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -55,6 +61,11 @@ export class ProductCategoryComponent implements OnDestroy {
     });
 
     this.#subscriptions.add(subscription);
+  }
+
+  updateCurrentPage(page: number): void {
+    this.currentPage.set(page);
+    this.loadCategories();
   }
 
   openAddForm(): void {

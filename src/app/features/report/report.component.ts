@@ -1,20 +1,20 @@
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, forkJoin } from 'rxjs';
 
 import { DatePreset, DatePresetKey } from '../../core/models/date-preset.model';
-import { PaymentMethodSummary, SalesSummary, TopProduct } from '../../core/models/report.model';
+import { DailySalesSummary, PaymentMethodSummary, SalesSummary, TopProduct } from '../../core/models/report.model';
 import { ReportService } from '../../core/services/report.service';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
-type ReportTabKey = 'summary' | 'topProducts' | 'paymentMethods';
+type ReportTabKey = 'summary' | 'topProducts' | 'paymentMethods' | 'dailySales';
 
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [DecimalPipe, PageHeaderComponent, ReactiveFormsModule],
+  imports: [DatePipe, DecimalPipe, PageHeaderComponent, ReactiveFormsModule],
   templateUrl: './report.component.html',
   styleUrl: './report.component.scss'
 })
@@ -35,12 +35,14 @@ export class ReportComponent implements OnDestroy {
   readonly reportTabs = [
     { key: 'summary' as ReportTabKey, label: 'Summary' },
     { key: 'topProducts' as ReportTabKey, label: 'Top Products' },
-    { key: 'paymentMethods' as ReportTabKey, label: 'Payment Methods' }
+    { key: 'paymentMethods' as ReportTabKey, label: 'Payment Methods' },
+    { key: 'dailySales' as ReportTabKey, label: 'Daily Sales' }
   ];
 
   readonly summary = signal<SalesSummary | null>(null);
   readonly topProducts = signal<TopProduct[]>([]);
   readonly paymentMethodSummary = signal<PaymentMethodSummary[]>([]);
+  readonly dailySalesSummary = signal<DailySalesSummary[]>([]);
 
   readonly isLoading = signal(false);
   readonly isDownloading = signal(false);
@@ -95,16 +97,19 @@ export class ReportComponent implements OnDestroy {
     this.summary.set(null);
     this.topProducts.set([]);
     this.paymentMethodSummary.set([]);
+    this.dailySalesSummary.set([]);
 
     const subscription = forkJoin({
       summary: this.#reportService.getSalesSummary(startDate!, endDate!),
       topProducts: this.#reportService.getTopProducts(startDate!, endDate!, 5),
-      paymentMethodSummary: this.#reportService.getPaymentMethodSummary(startDate!, endDate!)
+      paymentMethodSummary: this.#reportService.getPaymentMethodSummary(startDate!, endDate!),
+      dailySalesSummary: this.#reportService.getDailySalesSummary(startDate!, endDate!)
     }).subscribe({
-      next: ({ summary, topProducts, paymentMethodSummary }) => {
+      next: ({ summary, topProducts, paymentMethodSummary, dailySalesSummary }) => {
         this.summary.set(summary);
         this.topProducts.set(topProducts);
         this.paymentMethodSummary.set(paymentMethodSummary);
+        this.dailySalesSummary.set(dailySalesSummary);
         this.activeReportTab.set('summary');
         this.isLoading.set(false);
       },
@@ -113,6 +118,7 @@ export class ReportComponent implements OnDestroy {
         this.summary.set(null);
         this.topProducts.set([]);
         this.paymentMethodSummary.set([]);
+        this.dailySalesSummary.set([]);
         this.isLoading.set(false);
       }
     });
@@ -175,6 +181,9 @@ export class ReportComponent implements OnDestroy {
 
       case 'paymentMethods':
         return 'payment-methods';
+
+      case 'dailySales':
+        return 'daily-sales';
 
       case 'summary':
         return 'summary';

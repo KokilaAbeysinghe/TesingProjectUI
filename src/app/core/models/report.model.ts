@@ -28,3 +28,9 @@ export interface TopCustomers {
   customerAmount: number;
 }
 
+export interface DailySalesSummary {
+  date: string;
+  salesCount: number;
+  totalRevenue: number;
+}
+

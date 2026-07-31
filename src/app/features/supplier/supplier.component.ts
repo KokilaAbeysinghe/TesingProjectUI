@@ -1,18 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 
 import { Supplier } from '../../core/models/supplier.model';
 import { AuthService } from '../../core/services/auth.service';
 import { SupplierService } from '../../core/services/supplier.service';
 import { sriLankanPhoneValidator } from '../../core/validators/sri-lankan-phone.validator';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-supplier',
   standalone: true,
-  imports: [PageHeaderComponent, ReactiveFormsModule],
+  imports: [PageHeaderComponent, PaginationComponent, ReactiveFormsModule],
   templateUrl: './supplier.component.html',
   styleUrl: './supplier.component.scss'
 })
@@ -21,27 +22,19 @@ export class SupplierComponent implements OnDestroy {
   readonly #formBuilder = inject(FormBuilder);
   readonly #subscriptions = new Subscription();
   readonly #supplierService = inject(SupplierService);
+  readonly #searchChange = new Subject<void>();
+
+  readonly #pageSize = 5;
 
   readonly suppliers = signal<Supplier[]>([]);
+  readonly currentPage = signal(1);
+  readonly totalPages = signal(1);
+  readonly supplierSearch = signal('');
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly errorMessage = signal('');
   readonly showForm = signal(false);
   readonly editingSupplierId = signal<number | null>(null);
-  readonly supplierSearch = signal('');
-  
-    readonly filteredsuppliers = computed(() => {
-      const search = this.supplierSearch().trim().toLowerCase();
-      const suppliers = this.suppliers();
-    
-      if (!search) {
-        return suppliers;
-      }
-  
-      return suppliers.filter(supplier =>
-  supplier.name.toLowerCase().includes(search)
-);
-    });
 
   form = this.#formBuilder.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -51,6 +44,13 @@ export class SupplierComponent implements OnDestroy {
 
   constructor() {
     this.loadSuppliers();
+
+    const searchSubscription = this.#searchChange.pipe(debounceTime(300)).subscribe(() => {
+      this.currentPage.set(1);
+      this.loadSuppliers();
+    });
+
+    this.#subscriptions.add(searchSubscription);
   }
 
   ngOnDestroy(): void {
@@ -67,9 +67,12 @@ export class SupplierComponent implements OnDestroy {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    const subscription = this.#supplierService.getAll().subscribe({
-      next: suppliers => {
-        this.suppliers.set(suppliers);
+    const search = this.supplierSearch().trim() || undefined;
+
+    const subscription = this.#supplierService.getPaged(this.currentPage(), this.#pageSize, search).subscribe({
+      next: result => {
+        this.suppliers.set(result.items);
+        this.totalPages.set(Math.max(1, result.totalPages));
         this.isLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -79,6 +82,11 @@ export class SupplierComponent implements OnDestroy {
     });
 
     this.#subscriptions.add(subscription);
+  }
+
+  updateCurrentPage(page: number): void {
+    this.currentPage.set(page);
+    this.loadSuppliers();
   }
 
   openAddForm(): void {
@@ -163,5 +171,6 @@ export class SupplierComponent implements OnDestroy {
   }
   updatesupplierSearch(value: string): void {
     this.supplierSearch.set(value);
+    this.#searchChange.next();
   }
 }

@@ -26,7 +26,7 @@ export class ProductComponent implements OnDestroy {
   readonly #productService = inject(ProductService);
   readonly #subscriptions = new Subscription();
   readonly #searchChange = new Subject<void>();
-  readonly #pageSize = 10;
+  readonly #pageSize = 5;
 
   readonly products = signal<Product[]>([]);
   readonly categories = signal<ProductCategory[]>([]);

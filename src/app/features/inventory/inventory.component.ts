@@ -24,7 +24,7 @@ export class InventoryComponent implements OnDestroy {
   readonly #searchChange = new Subject<void>();
 
   readonly #lowStockThreshold = 10;
-  readonly #pageSize = 10;
+  readonly #pageSize = 5;
 
   readonly adjustmentTypes: StockAdjustmentType[] = ['Add', 'Remove'];
 
