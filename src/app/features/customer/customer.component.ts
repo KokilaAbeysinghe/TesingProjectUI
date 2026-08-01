@@ -9,6 +9,7 @@ import { sriLankanPhoneValidator } from '../../core/validators/sri-lankan-phone.
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
+
 @Component({
   selector: 'app-customer',
   standalone: true,
@@ -21,6 +22,7 @@ export class CustomerComponent implements OnDestroy {
   readonly #formBuilder = inject(FormBuilder);
   readonly #subscriptions = new Subscription();
   readonly #pageSize = 5;
+  
 
   readonly customers = signal<Customer[]>([]);
   readonly currentPage = signal(1);
@@ -155,4 +157,6 @@ export class CustomerComponent implements OnDestroy {
 
     return error.error?.Message ?? error.error?.message ?? defaultMessage;
   }
+
+  
 }

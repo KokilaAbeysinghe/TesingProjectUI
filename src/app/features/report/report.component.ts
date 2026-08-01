@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription, forkJoin } from 'rxjs';
+import { Observable, Subscription, forkJoin } from 'rxjs';
 
 import { DatePreset, DatePresetKey } from '../../core/models/date-preset.model';
 import { DailySalesSummary, LowStockProduct, MonthlySalesSummary, PaymentMethodSummary, TopProduct } from '../../core/models/report.model';
@@ -59,6 +59,12 @@ export class ReportComponent implements OnDestroy {
     () => this.reportTabs.find(tab => tab.key === this.activeReportTab())?.label ?? ''
   );
 
+  readonly showDateFilters = computed(() => {
+    const tab = this.activeReportTab();
+
+    return tab === 'topProducts' || tab === 'paymentMethods' || tab === 'dailySales';
+  });
+
   form = this.#formBuilder.group({
     startDate: [this.#defaultStartDate(), [Validators.required]],
     endDate: [this.#defaultEndDate(), [Validators.required]]
@@ -79,57 +85,36 @@ export class ReportComponent implements OnDestroy {
   }
 
   generateReport(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      this.errorMessage.set('Please select a valid start and end date.');
+    const reportType = this.activeReportTab();
 
-      return;
-    }
+    if (this.showDateFilters()) {
+      if (this.form.invalid) {
+        this.form.markAllAsTouched();
+        this.errorMessage.set('Please select a valid start and end date.');
 
-    const { startDate, endDate } = this.form.getRawValue();
-
-    if (startDate! > endDate!) {
-      this.errorMessage.set('Start date must be before or equal to end date.');
-
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    this.monthlySalesSummary.set([]);
-    this.topProducts.set([]);
-    this.paymentMethodSummary.set([]);
-    this.dailySalesSummary.set([]);
-    this.lowStockProducts.set([]);
-
-    const subscription = forkJoin({
-      monthlySalesSummary: this.#reportService.getMonthlySalesSummary(startDate!, endDate!),
-      topProducts: this.#reportService.getTopProducts(startDate!, endDate!, 5),
-      paymentMethodSummary: this.#reportService.getPaymentMethodSummary(startDate!, endDate!),
-      dailySalesSummary: this.#reportService.getDailySalesSummary(startDate!, endDate!),
-      lowStockProducts: this.#reportService.getLowStockProducts()
-    }).subscribe({
-      next: ({ monthlySalesSummary, topProducts, paymentMethodSummary, dailySalesSummary, lowStockProducts }) => {
-        this.monthlySalesSummary.set(monthlySalesSummary);
-        this.topProducts.set(topProducts);
-        this.paymentMethodSummary.set(paymentMethodSummary);
-        this.dailySalesSummary.set(dailySalesSummary);
-        this.lowStockProducts.set(lowStockProducts);
-        this.activeReportTab.set('summary');
-        this.isLoading.set(false);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.errorMessage.set(this.#getErrorMessage(error, 'Failed to generate report.'));
-        this.monthlySalesSummary.set([]);
-        this.topProducts.set([]);
-        this.paymentMethodSummary.set([]);
-        this.dailySalesSummary.set([]);
-        this.lowStockProducts.set([]);
-        this.isLoading.set(false);
+        return;
       }
-    });
 
-    this.#subscriptions.add(subscription);
+      const { startDate, endDate } = this.form.getRawValue();
+
+      if (startDate! > endDate!) {
+        this.errorMessage.set('Start date must be before or equal to end date.');
+
+        return;
+      }
+
+      this.#loadDateFilteredReports(startDate!, endDate!);
+
+      return;
+    }
+
+    if (reportType === 'summary') {
+      this.#loadMonthlySalesSummary();
+
+      return;
+    }
+
+    this.#loadLowStockProducts();
   }
 
   applyPreset(preset: DatePresetKey): void {
@@ -142,33 +127,122 @@ export class ReportComponent implements OnDestroy {
 
   selectReportTab(tabKey: ReportTabKey): void {
     this.activeReportTab.set(tabKey);
+    this.errorMessage.set('');
+    this.exportErrorMessage.set('');
+    this.generateReport();
   }
 
   downloadExcel(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      this.exportErrorMessage.set('Please select a valid start and end date.');
-
-      return;
-    }
-
-    const { startDate, endDate } = this.form.getRawValue();
-
-    if (startDate! > endDate!) {
-      this.exportErrorMessage.set('Start date must be before or equal to end date.');
-
-      return;
-    }
-
-    this.isDownloading.set(true);
-    this.exportErrorMessage.set('');
-
     const reportType = this.activeReportTab();
     const reportFileNamePart = this.#getReportFileNamePart(reportType);
 
-    const subscription = this.#reportService.exportToExcel(startDate!, endDate!, reportType).subscribe({
+    if (this.showDateFilters()) {
+      if (this.form.invalid) {
+        this.form.markAllAsTouched();
+        this.exportErrorMessage.set('Please select a valid start and end date.');
+
+        return;
+      }
+
+      const { startDate, endDate } = this.form.getRawValue();
+
+      if (startDate! > endDate!) {
+        this.exportErrorMessage.set('Start date must be before or equal to end date.');
+
+        return;
+      }
+
+      this.#downloadExcelFile(
+        this.#reportService.exportToExcel(reportType, startDate!, endDate!),
+        `${reportFileNamePart}-report_${startDate}_to_${endDate}.xlsx`
+      );
+
+      return;
+    }
+
+    this.#downloadExcelFile(
+      this.#reportService.exportToExcel(reportType),
+      `${reportFileNamePart}-report.xlsx`
+    );
+  }
+
+  #loadMonthlySalesSummary(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    this.monthlySalesSummary.set([]);
+
+    const subscription = this.#reportService.getMonthlySalesSummary().subscribe({
+      next: monthlySalesSummary => {
+        this.monthlySalesSummary.set(monthlySalesSummary);
+        this.isLoading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage.set(this.#getErrorMessage(error, 'Failed to generate report.'));
+        this.monthlySalesSummary.set([]);
+        this.isLoading.set(false);
+      }
+    });
+
+    this.#subscriptions.add(subscription);
+  }
+
+  #loadLowStockProducts(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    this.lowStockProducts.set([]);
+
+    const subscription = this.#reportService.getLowStockProducts().subscribe({
+      next: lowStockProducts => {
+        this.lowStockProducts.set(lowStockProducts);
+        this.isLoading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage.set(this.#getErrorMessage(error, 'Failed to generate report.'));
+        this.lowStockProducts.set([]);
+        this.isLoading.set(false);
+      }
+    });
+
+    this.#subscriptions.add(subscription);
+  }
+
+  #loadDateFilteredReports(startDate: string, endDate: string): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    this.topProducts.set([]);
+    this.paymentMethodSummary.set([]);
+    this.dailySalesSummary.set([]);
+
+    const subscription = forkJoin({
+      topProducts: this.#reportService.getTopProducts(startDate, endDate, 5),
+      paymentMethodSummary: this.#reportService.getPaymentMethodSummary(startDate, endDate),
+      dailySalesSummary: this.#reportService.getDailySalesSummary(startDate, endDate)
+    }).subscribe({
+      next: ({ topProducts, paymentMethodSummary, dailySalesSummary }) => {
+        this.topProducts.set(topProducts);
+        this.paymentMethodSummary.set(paymentMethodSummary);
+        this.dailySalesSummary.set(dailySalesSummary);
+        this.isLoading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage.set(this.#getErrorMessage(error, 'Failed to generate report.'));
+        this.topProducts.set([]);
+        this.paymentMethodSummary.set([]);
+        this.dailySalesSummary.set([]);
+        this.isLoading.set(false);
+      }
+    });
+
+    this.#subscriptions.add(subscription);
+  }
+
+  #downloadExcelFile(request: Observable<Blob>, fileName: string): void {
+    this.isDownloading.set(true);
+    this.exportErrorMessage.set('');
+
+    const subscription = request.subscribe({
       next: blob => {
-        this.#saveFile(blob, `${reportFileNamePart}-report_${startDate}_to_${endDate}.xlsx`);
+        this.#saveFile(blob, fileName);
         this.isDownloading.set(false);
       },
       error: () => {

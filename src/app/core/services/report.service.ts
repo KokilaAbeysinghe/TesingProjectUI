@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -10,10 +10,8 @@ export class ReportService {
   readonly #http = inject(HttpClient);
   readonly #baseUrl = `${environment.apiUrl}/api/Reports`;
 
-  getMonthlySalesSummary(startDate: string, endDate: string): Observable<MonthlySalesSummary[]> {
-    return this.#http.get<MonthlySalesSummary[]>(`${this.#baseUrl}/monthly-sales`, {
-      params: { startDate, endDate }
-    });
+  getMonthlySalesSummary(): Observable<MonthlySalesSummary[]> {
+    return this.#http.get<MonthlySalesSummary[]>(`${this.#baseUrl}/monthly-sales`);
   }
 
   getTopProducts(startDate: string, endDate: string, count: number): Observable<TopProduct[]> {
@@ -38,9 +36,19 @@ export class ReportService {
     return this.#http.get<LowStockProduct[]>(`${this.#baseUrl}/low-stock`);
   }
 
-  exportToExcel(startDate: string, endDate: string, reportType: string): Observable<Blob> {
+  exportToExcel(reportType: string, startDate?: string, endDate?: string): Observable<Blob> {
+    let params = new HttpParams().set('reportType', reportType);
+
+    if (startDate) {
+      params = params.set('startDate', startDate);
+    }
+
+    if (endDate) {
+      params = params.set('endDate', endDate);
+    }
+
     return this.#http.get(`${this.#baseUrl}/export/excel`, {
-      params: { startDate, endDate, reportType },
+      params,
       responseType: 'blob'
     });
   }
