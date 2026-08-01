@@ -25,3 +25,71 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+report controller.cs
+[HttpGet("low-stock")]
+public async Task<IActionResult> GetLowStockProducts(int level = 10)
+{
+    var lowStockProducts = await _reportService.GetLowStockProducts(level);
+    return Ok(lowStockProducts);
+}
+Ireportservice
+Task<List<LowStockProductDTO>> GetLowStockProducts(int level);
+
+report service
+private const int LowStockReorderLevel = 10;- delete
+176-193
+public async Task<List<LowStockProductDTO>> GetLowStockProducts(int level)
+{
+    var products = await _productRepository.GetAllProducts();
+
+    var lowStockProducts = products
+        .Where(product => product.Stock <= level)
+        .OrderBy(product => product.Stock)
+        .Select(product => new LowStockProductDTO
+        {
+            ProductName = product.Name,
+            CurrentStock = product.Stock,
+            ReorderLevel = level,
+            Status = product.Stock == 0 ? "Out of Stock" : "Low Stock"
+        })
+        .ToList();
+
+    return lowStockProducts;
+}
+ui ts 37 39
+getLowStockProducts(level: number = 10): Observable<LowStockProduct[]> {
+  return this.#http.get<LowStockProduct[]>(`${this.#baseUrl}/low-stock`, {
+    params: { level: level.toString() }
+  });
+}
+component ts 110
+lowStockProducts: this.#reportService.getLowStockProducts(this.lowStockLevel())
+readonly lowStockLevel = signal(10);
+updateLowStockLevel(value: number): void {
+  this.lowStockLevel.set(value);
+}
+html 203 205
+<label for="lowStockLevel">Level</label>
+<input
+  id="lowStockLevel"
+  type="number"
+  [value]="lowStockLevel()"
+  (change)="updateLowStockLevel(+$any($event.target).value)"
+/>
+
+
+
+<select [value]="selectedStatus()" (change)="updateStatusFilter($any($event.target).value)">
+  <option value="All">All</option>
+  <option value="Completed">Completed</option>
+  <option value="Voided">Voided</option>
+</select>
+this.sales.set(result.items.filter(s => 
+  this.selectedStatus() === 'All' || s.status === this.selectedStatus()
+));
+updateStatusFilter(status: string): void {
+  this.selectedStatus.set(status);
+  this.currentPage.set(1);
+  this.loadSales();
+}
