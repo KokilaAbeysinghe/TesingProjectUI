@@ -1,309 +1,288 @@
-<app-page-header
-  title="Reports"
-  subtitle="Review sales performance and stock levels"
-/>
+<app-page-header title="Reports" subtitle="Review sales performance and stock levels" />
 
 @if (errorMessage()) {
-  <div class="alert alert-error">{{ errorMessage() }}</div>
+<div class="alert alert-error">{{ errorMessage() }}</div>
 }
 
 <div class="report-tab-group">
   <div class="report-tabs">
     @for (tab of reportTabs; track tab.key) {
-      <button
-        type="button"
-        class="report-tab"
-        [class.active]="activeReportTab() === tab.key"
-        [disabled]="isLoading()"
-        (click)="selectReportTab(tab.key)"
-      >
-        {{ tab.label }}
-      </button>
+    <button type="button" class="report-tab" [class.active]="activeReportTab() === tab.key" [disabled]="isLoading()"
+      (click)="selectReportTab(tab.key)">
+      {{ tab.label }}
+    </button>
     }
   </div>
 </div>
 
 <div class="form-panel">
   @if (showDateFilters()) {
-    <div class="preset-group">
-      <span class="preset-label">Quick Range</span>
+  <div class="preset-group">
+    <span class="preset-label">Quick Range</span>
 
-      <div class="preset-tabs">
-        @for (preset of datePresets; track preset.key) {
-          <button
-            type="button"
-            class="preset-tab"
-            [class.active]="selectedPreset() === preset.key"
-            [disabled]="isLoading()"
-            (click)="applyPreset(preset.key)"
-          >
-            {{ preset.label }}
-          </button>
-        }
-      </div>
+    <div class="preset-tabs">
+      @for (preset of datePresets; track preset.key) {
+      <button type="button" class="preset-tab" [class.active]="selectedPreset() === preset.key" [disabled]="isLoading()"
+        (click)="applyPreset(preset.key)">
+        {{ preset.label }}
+      </button>
+      }
     </div>
+  </div>
   }
 
   <form [formGroup]="form" (ngSubmit)="generateReport()" class="filter-form">
     @if (showDateFilters()) {
-      <div class="form-group">
-        <label for="startDate">Start Date</label>
+    <div class="form-group">
+      <label for="startDate">Start Date</label>
 
-        <input id="startDate" type="date" formControlName="startDate" />
-      </div>
+      <input id="startDate" type="date" formControlName="startDate" />
+    </div>
 
-      <div class="form-group">
-        <label for="endDate">End Date</label>
+    <div class="form-group">
+      <label for="endDate">End Date</label>
 
-        <input id="endDate" type="date" formControlName="endDate" />
-      </div>
+      <input id="endDate" type="date" formControlName="endDate" />
+    </div>
     }
 
     <button type="submit" class="btn btn-primary" [disabled]="isLoading()">
       @if (isLoading()) {
-        Loading...
+      Loading...
       } @else {
-        Generate Report
+      Generate Report
       }
     </button>
 
-    <button
-      type="button"
-      class="btn btn-secondary"
-      [disabled]="isDownloading()"
-      (click)="downloadExcel()"
-    >
+    <button type="button" class="btn btn-secondary" [disabled]="isDownloading()" (click)="downloadExcel()">
       @if (isDownloading()) {
-        Downloading...
+      Downloading...
       } @else {
-        Download {{ activeReportTabLabel() }} Excel
+      Download {{ activeReportTabLabel() }} Excel
       }
     </button>
   </form>
 
   @if (exportErrorMessage()) {
-    <div class="alert alert-error export-alert">{{ exportErrorMessage() }}</div>
+  <div class="alert alert-error export-alert">{{ exportErrorMessage() }}</div>
   }
 </div>
 
 @if (activeReportTab() === "summary") {
-  <div class="table-card">
-    <h3>Monthly Sales Summary</h3>
+<div class="table-card">
+  <h3>Monthly Sales Summary</h3>
 
-    @if (isLoading()) {
-      <p class="loading-text">Loading report...</p>
-    } @else if (errorMessage()) {
-      <p class="empty-text">
-        Report could not be loaded. Check the error above and try again.
-      </p>
-    } @else if (monthlySalesSummary().length === 0) {
-      <p class="empty-text">No sales found.</p>
-    } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Month</th>
+  @if (isLoading()) {
+  <p class="loading-text">Loading report...</p>
+  } @else if (errorMessage()) {
+  <p class="empty-text">
+    Report could not be loaded. Check the error above and try again.
+  </p>
+  } @else if (monthlySalesSummary().length === 0) {
+  <p class="empty-text">No sales found.</p>
+  } @else {
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Month</th>
 
-            <th>Transactions</th>
+        <th>Transactions</th>
 
-            <th>Total Revenue</th>
+        <th>Total Revenue</th>
 
-            <th>Average Sale Value</th>
-          </tr>
-        </thead>
+        <th>Average Sale Value</th>
+      </tr>
+    </thead>
 
-        <tbody>
-          @for (
-            monthSummary of monthlySalesSummary();
-            track monthSummary.month
-          ) {
-            <tr>
-              <td>{{ monthSummary.month }}</td>
+    <tbody>
+      @for (
+      monthSummary of monthlySalesSummary();
+      track monthSummary.month
+      ) {
+      <tr>
+        <td>{{ monthSummary.month }}</td>
 
-              <td>{{ monthSummary.transactionCount }}</td>
+        <td>{{ monthSummary.transactionCount }}</td>
 
-              <td>LKR {{ monthSummary.totalRevenue | number: "1.2-2" }}</td>
+        <td>LKR {{ monthSummary.totalRevenue | number: "1.2-2" }}</td>
 
-              <td>LKR {{ monthSummary.averageSaleValue | number: "1.2-2" }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </div>
+        <td>LKR {{ monthSummary.averageSaleValue | number: "1.2-2" }}</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+  }
+</div>
 }
 
 @if (activeReportTab() === "topProducts") {
-  <div class="table-card">
-    <h3>Top Selling Products</h3>
+<div class="table-card">
+  <h3>Top Selling Products</h3>
 
-    @if (isLoading()) {
-      <p class="loading-text">Loading report...</p>
-    } @else if (errorMessage()) {
-      <p class="empty-text">
-        Report could not be loaded. Check the error above and try again.
-      </p>
-    } @else if (topProducts().length === 0) {
-      <p class="empty-text">No sales found for the selected date range.</p>
-    } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Product</th>
+  @if (isLoading()) {
+  <p class="loading-text">Loading report...</p>
+  } @else if (errorMessage()) {
+  <p class="empty-text">
+    Report could not be loaded. Check the error above and try again.
+  </p>
+  } @else if (topProducts().length === 0) {
+  <p class="empty-text">No sales found for the selected date range.</p>
+  } @else {
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Product</th>
 
-            <th>Category</th>
+        <th>Category</th>
 
-            <th>Qty Sold</th>
+        <th>Qty Sold</th>
 
-            <th>Revenue</th>
-          </tr>
-        </thead>
+        <th>Revenue</th>
+      </tr>
+    </thead>
 
-        <tbody>
-          @for (product of topProducts(); track product.productId) {
-            <tr>
-              <td>{{ product.productName }}</td>
+    <tbody>
+      @for (product of topProducts(); track product.productId) {
+      <tr>
+        <td>{{ product.productName }}</td>
 
-              <td>{{ product.categoryName }}</td>
+        <td>{{ product.categoryName }}</td>
 
-              <td>{{ product.quantitySold }}</td>
+        <td>{{ product.quantitySold }}</td>
 
-              <td>LKR {{ product.revenue | number: "1.2-2" }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </div>
+        <td>LKR {{ product.revenue | number: "1.2-2" }}</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+  }
+</div>
 }
 
 @if (activeReportTab() === "paymentMethods") {
-  <div class="table-card">
-    <h3>Payment Method Breakdown</h3>
+<div class="table-card">
+  <h3>Payment Method Breakdown</h3>
 
-    @if (isLoading()) {
-      <p class="loading-text">Loading report...</p>
-    } @else if (errorMessage()) {
-      <p class="empty-text">
-        Report could not be loaded. Check the error above and try again.
-      </p>
-    } @else if (paymentMethodSummary().length === 0) {
-      <p class="empty-text">No sales found for the selected date range.</p>
-    } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Payment Method</th>
+  @if (isLoading()) {
+  <p class="loading-text">Loading report...</p>
+  } @else if (errorMessage()) {
+  <p class="empty-text">
+    Report could not be loaded. Check the error above and try again.
+  </p>
+  } @else if (paymentMethodSummary().length === 0) {
+  <p class="empty-text">No sales found for the selected date range.</p>
+  } @else {
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Payment Method</th>
 
-            <th>Sales Count</th>
+        <th>Sales Count</th>
 
-            <th>Total Amount</th>
-          </tr>
-        </thead>
+        <th>Total Amount</th>
+      </tr>
+    </thead>
 
-        <tbody>
-          @for (method of paymentMethodSummary(); track method.paymentMethod) {
-            <tr>
-              <td>{{ method.paymentMethod }}</td>
+    <tbody>
+      @for (method of paymentMethodSummary(); track method.paymentMethod) {
+      <tr>
+        <td>{{ method.paymentMethod }}</td>
 
-              <td>{{ method.salesCount }}</td>
+        <td>{{ method.salesCount }}</td>
 
-              <td>LKR {{ method.totalAmount | number: "1.2-2" }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </div>
+        <td>LKR {{ method.totalAmount | number: "1.2-2" }}</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+  }
+</div>
 }
 
 @if (activeReportTab() === "dailySales") {
-  <div class="table-card">
-    <h3>Daily Sales Summary</h3>
+<div class="table-card">
+  <h3>Daily Sales Summary</h3>
 
-    @if (isLoading()) {
-      <p class="loading-text">Loading report...</p>
-    } @else if (errorMessage()) {
-      <p class="empty-text">
-        Report could not be loaded. Check the error above and try again.
-      </p>
-    } @else if (dailySalesSummary().length === 0) {
-      <p class="empty-text">No sales found for the selected date range.</p>
-    } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Date</th>
+  @if (isLoading()) {
+  <p class="loading-text">Loading report...</p>
+  } @else if (errorMessage()) {
+  <p class="empty-text">
+    Report could not be loaded. Check the error above and try again.
+  </p>
+  } @else if (dailySalesSummary().length === 0) {
+  <p class="empty-text">No sales found for the selected date range.</p>
+  } @else {
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date</th>
 
-            <th>No of Sales</th>
+        <th>No of Sales</th>
 
-            <th>Total Revenue</th>
-          </tr>
-        </thead>
+        <th>Total Revenue</th>
+      </tr>
+    </thead>
 
-        <tbody>
-          @for (dailySummary of dailySalesSummary(); track dailySummary.date) {
-            <tr>
-              <td>{{ dailySummary.date | date: "yyyy-MM-dd" }}</td>
+    <tbody>
+      @for (dailySummary of dailySalesSummary(); track dailySummary.date) {
+      <tr>
+        <td>{{ dailySummary.date | date: "yyyy-MM-dd" }}</td>
 
-              <td>{{ dailySummary.salesCount }}</td>
+        <td>{{ dailySummary.salesCount }}</td>
 
-              <td>LKR {{ dailySummary.totalRevenue | number: "1.2-2" }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </div>
+        <td>LKR {{ dailySummary.totalRevenue | number: "1.2-2" }}</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+  }
+</div>
 }
 
 @if (activeReportTab() === "lowStock") {
-  <div class="table-card">
-    <h3>Low Stock Products</h3>
+<div class="table-card">
+  <h3>Low Stock Products</h3>
 
-    @if (isLoading()) {
-      <p class="loading-text">Loading report...</p>
-    } @else if (errorMessage()) {
-      <p class="empty-text">
-        Report could not be loaded. Check the error above and try again.
-      </p>
-    } @else if (lowStockProducts().length === 0) {
-      <p class="empty-text">No low stock products found.</p>
-    } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Product</th>
+  @if (isLoading()) {
+  <p class="loading-text">Loading report...</p>
+  } @else if (errorMessage()) {
+  <p class="empty-text">
+    Report could not be loaded. Check the error above and try again.
+  </p>
+  } @else if (lowStockProducts().length === 0) {
+  <p class="empty-text">No low stock products found.</p>
+  } @else {
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Product</th>
 
-            <th>Current Stock</th>
+        <th>Current Stock</th>
 
-            <th>Reorder Level</th>
+        <th>Reorder Level</th>
 
-            <th>Status</th>
-          </tr>
-        </thead>
+        <th>Status</th>
+      </tr>
+    </thead>
 
-        <tbody>
-          @for (product of lowStockProducts(); track product.productName) {
-            <tr>
-              <td>{{ product.productName }}</td>
+    <tbody>
+      @for (product of lowStockProducts(); track product.productName) {
+      <tr>
+        <td>{{ product.productName }}</td>
 
-              <td>{{ product.currentStock }}</td>
+        <td>{{ product.currentStock }}</td>
 
-              <td>{{ product.reorderLevel }}</td>
+        <td>{{ product.reorderLevel }}</td>
 
-              <td>
-                <span
-                  class="status-badge"
-                  [class.status-out]="product.status === 'Out of Stock'"
-                >
-                  {{ product.status }}
-                </span>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </div>
+        <td>
+          <span class="status-badge" [class.status-out]="product.status === 'Out of Stock'">
+            {{ product.status }}
+          </span>
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>
+  }
+</div>
 }
